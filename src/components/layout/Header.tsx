@@ -1,6 +1,17 @@
-import { Bell, Search, ChevronRight } from 'lucide-react';
+import { Bell, Search, ChevronRight, Info, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Notification } from '../../types';
+import { cn } from '../../lib/utils';
 
-export function Header() {
+interface HeaderProps {
+    notifications?: Notification[];
+    onClearNotifications?: () => void;
+}
+
+export function Header({ notifications = [], onClearNotifications }: HeaderProps) {
+    const [isNotifOpen, setIsNotifOpen] = useState(false);
+    const unreadCount = notifications.length;
+
     return (
         <header className="h-14 fixed top-0 left-64 right-0 bg-slate-950 border-b border-slate-900 z-40 flex items-center justify-between px-6">
             {/* Left: Breadcrumbs / Pager */}
@@ -43,10 +54,56 @@ export function Header() {
                 </div>
 
                 {/* Notifications */}
-                <button className="relative text-slate-400 hover:text-slate-200 transition-colors">
-                    <Bell size={18} />
-                    <span className="absolute -top-1 -right-1 h-2 w-2 bg-rose-500 rounded-full border border-slate-950"></span>
-                </button>
+                <div className="relative">
+                    <button
+                        className={cn(
+                            "relative text-slate-400 hover:text-slate-200 transition-colors",
+                            isNotifOpen && "text-slate-100"
+                        )}
+                        onClick={() => setIsNotifOpen(!isNotifOpen)}
+                    >
+                        <Bell size={18} />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 h-3 w-3 bg-rose-500 rounded-full border border-slate-950 flex items-center justify-center text-[8px] font-bold text-white">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </button>
+
+                    {isNotifOpen && (
+                        <div className="absolute right-0 mt-2 w-80 bg-slate-950 border border-slate-800 rounded shadow-2xl z-50 overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-2 border-b border-slate-900 bg-slate-900/50">
+                                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Notifications</span>
+                                <button
+                                    onClick={onClearNotifications}
+                                    className="text-[10px] text-slate-500 hover:text-slate-300 uppercase font-mono"
+                                >
+                                    Clear All
+                                </button>
+                            </div>
+                            <div className="max-h-64 overflow-y-auto">
+                                {notifications.length === 0 ? (
+                                    <div className="p-4 text-center text-xs text-slate-600 italic">No new notifications</div>
+                                ) : (
+                                    notifications.map(n => (
+                                        <div key={n.id} className="p-3 border-b border-slate-900 hover:bg-slate-900/30 transition-colors flex gap-3">
+                                            <div className="mt-0.5">
+                                                {n.type === 'success' ? <CheckCircle size={14} className="text-emerald-500" /> :
+                                                    n.type === 'warning' ? <AlertTriangle size={14} className="text-amber-500" /> :
+                                                        <Info size={14} className="text-blue-500" />}
+                                            </div>
+                                            <div>
+                                                <h4 className="text-xs font-bold text-slate-300">{n.title}</h4>
+                                                <p className="text-[10px] text-slate-500 leading-relaxed">{n.message}</p>
+                                                <span className="text-[9px] text-slate-600 font-mono mt-1 block">{n.timestamp}</span>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
 
                 {/* User Profile */}
                 <div className="flex items-center gap-3 pl-6 border-l border-slate-900">

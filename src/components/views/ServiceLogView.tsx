@@ -75,24 +75,26 @@ export function ServiceLogView({ data, onLogEvent, onEditEvent, onDeleteEvent }:
                     if (editingEvent) {
                         const updatedEvent: Event = {
                             ...editingEvent,
-                            status: (formData.outcome === 'Completed' ? 'resolved' : 'review') as Event['status'],
+                            status: formData.status || editingEvent.status,
                             vendor: formData.vendor || 'Unknown Vendor',
                             location: formData.location || 'Unknown Loc',
                             type: formData.type,
                             price: Number(formData.price) || 0,
                             satisfaction: formData.satisfaction,
+                            reviewNotes: formData.reviewNotes
                         };
                         onEditEvent(updatedEvent);
                     } else {
                         const newEvent: Event = {
                             id: `EV-${Math.floor(Math.random() * 10000)}`,
                             timestamp: timestamp,
-                            status: (formData.outcome === 'Completed' ? 'resolved' : 'review') as Event['status'],
+                            status: formData.status || 'review', // Use formData.status if provided, otherwise default to 'review'
                             vendor: formData.vendor || 'Unknown Vendor',
                             location: formData.location || 'Unknown Loc',
                             type: formData.type,
                             price: Number(formData.price) || 0,
-                            satisfaction: formData.satisfaction
+                            satisfaction: formData.satisfaction,
+                            reviewNotes: formData.reviewNotes
                         };
                         onLogEvent(newEvent);
                     }

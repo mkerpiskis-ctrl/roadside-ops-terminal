@@ -1,18 +1,30 @@
-import React from 'react';
-import { Sidebar, ViewType } from './Sidebar';
+import { ReactNode } from 'react';
 import { Header } from './Header';
+import { Sidebar } from './Sidebar';
+import { Notification } from '../../types';
 
 interface LayoutProps {
-    children: React.ReactNode;
-    currentView: ViewType;
-    onNavigate: (view: ViewType) => void;
-    onFilterVendor: (vendor: string) => void;
+    children: ReactNode;
+    currentView: 'dashboard' | 'service_log' | 'vendors' | 'analytics';
+    onNavigate: (view: 'dashboard' | 'service_log' | 'vendors' | 'analytics') => void;
+    onFilterVendor: (vendor: string | null) => void;
     activeVendorFilter: string | null;
+    notifications: Notification[];
+    onClearNotifications: () => void;
 }
 
-export function Layout({ children, currentView, onNavigate, onFilterVendor, activeVendorFilter }: LayoutProps) {
+export function Layout({
+    children,
+    currentView,
+    onNavigate,
+    onFilterVendor,
+    activeVendorFilter,
+    notifications,
+    onClearNotifications
+}: LayoutProps) {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-blue-500/30">
+            <Header notifications={notifications} onClearNotifications={onClearNotifications} />
             <Sidebar
                 currentView={currentView}
                 onNavigate={onNavigate}

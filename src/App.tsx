@@ -4,8 +4,7 @@ import { Dashboard } from './components/dashboard/Dashboard';
 import { ServiceLogView } from './components/views/ServiceLogView';
 import { VendorWatchlistView } from './components/views/VendorWatchlistView';
 import { AnalyticsView } from './components/views/AnalyticsView';
-import { ViewType } from './components/layout/Sidebar';
-import { Event } from './types';
+import { Event, Notification } from './types';
 
 // Initial Mock Data (moved from Dashboard)
 const MOCK_DATA: Event[] = Array.from({ length: 15 }).map((_, i) => ({
@@ -20,30 +19,49 @@ const MOCK_DATA: Event[] = Array.from({ length: 15 }).map((_, i) => ({
 }));
 
 function App() {
-    const [currentView, setCurrentView] = useState<ViewType>('dashboard');
+    const [currentView, setCurrentView] = useState<'dashboard' | 'service_log' | 'vendors' | 'analytics'>('dashboard');
     const [vendorFilter, setVendorFilter] = useState<string | null>(null);
     const [data, setData] = useState<Event[]>(MOCK_DATA);
+    const [notifications, setNotifications] = useState<Notification[]>([
+        { id: 'n1', title: 'System Online', message: 'Connection established with central dispatch.', timestamp: 'Just now', read: false, type: 'success' },
+        { id: 'n2', title: 'Pending Reviews', message: '3 cases require manager approval.', timestamp: '10m ago', read: false, type: 'warning' }
+    ]);
 
-    const handleNavigate = (view: ViewType) => {
+    const handleNavigate = (view: 'dashboard' | 'service_log' | 'vendors' | 'analytics') => {
         setCurrentView(view);
-        if (view !== 'dashboard') {
-            setVendorFilter(null);
-        }
     };
 
-    const handleVendorFilter = (vendor: string) => {
+    const handleVendorFilter = (vendor: string | null) => {
         setVendorFilter(vendor);
-        if (currentView !== 'dashboard') {
-            setCurrentView('dashboard');
-        }
+        if (currentView !== 'dashboard') setCurrentView('dashboard');
+    };
+
+    const addNotification = (title: string, message: string, type: Notification['type'] = 'info') => {
+        const newNotif: Notification = {
+            id: `n-${Date.now()}`,
+            title,
+            message,
+            timestamp: 'Just now',
+            read: false,
+            type
+        };
+        setNotifications(prev => [newNotif, ...prev]);
+    };
+
+    const handleClearNotifications = () => {
+        setNotifications([]);
     };
 
     const handleLogEvent = (newEvent: Event) => {
         setData([newEvent, ...data]);
+        addNotification('New Event Logged', `Case ${newEvent.id} added by System.`, 'info');
     };
 
     const handleEditEvent = (updatedEvent: Event) => {
         setData(data.map(ev => ev.id === updatedEvent.id ? updatedEvent : ev));
+        if (updatedEvent.status === 'resolved') {
+            addNotification('Case Resolved', `Case ${updatedEvent.id} marked as resolved.`, 'success');
+        }
     };
 
     const handleDeleteEvent = (id: string) => {
@@ -56,6 +74,8 @@ function App() {
             onNavigate={handleNavigate}
             onFilterVendor={handleVendorFilter}
             activeVendorFilter={vendorFilter}
+            notifications={notifications}
+            onClearNotifications={handleClearNotifications}
         >
             {currentView === 'dashboard' && (
                 <Dashboard

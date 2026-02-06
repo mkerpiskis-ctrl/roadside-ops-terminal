@@ -31,20 +31,22 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         price: '',
         satisfaction: 'good',
         flags: [] as string[],
-        outcome: 'Completed'
+        outcome: 'Completed',
+        reviewNotes: ''
     });
 
     useEffect(() => {
         if (initialData) {
             setFormData({
-                category: 'Roadside', // Default or derive from type if stored
+                category: 'Roadside',
                 type: initialData.type,
                 location: initialData.location,
                 vendor: initialData.vendor,
                 price: initialData.price.toString(),
                 satisfaction: initialData.satisfaction,
-                flags: [], // Would need to be stored in Event if relevant
-                outcome: initialData.status === 'resolved' ? 'Completed' : 'Completed with Issues'
+                flags: [],
+                outcome: initialData.status === 'resolved' ? 'Completed' : 'Completed', // Simplified for now
+                reviewNotes: initialData.reviewNotes || ''
             });
         } else {
             // Reset form for new entry
@@ -56,7 +58,8 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 price: '',
                 satisfaction: 'good',
                 flags: [],
-                outcome: 'Completed'
+                outcome: 'Completed',
+                reviewNotes: ''
             });
         }
     }, [initialData, isOpen]);
@@ -72,7 +75,20 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(formData);
+        // If it was in review and we are just saving, keep it in review unless explicit action taken
+        // But for generic submit, we pass the data up
+        onSubmit({
+            ...formData,
+            status: initialData?.status === 'review' ? 'review' : 'resolved'
+        });
+        onClose();
+    };
+
+    const handleTransition = (newStatus: 'pending' | 'resolved') => {
+        onSubmit({
+            ...formData,
+            status: newStatus
+        });
         onClose();
     };
 
@@ -80,21 +96,46 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-slate-950 border border-slate-700 w-full max-w-2xl shadow-2xl rounded-sm flex flex-col max-h-[90vh]">
 
-                {/* Modal Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900">
-                    <div className="flex items-center gap-2">
-                        <PenTool size={16} className="text-blue-500" />
-                        <span className="font-mono font-bold text-slate-100 uppercase tracking-wider">
-                            {initialData ? 'Edit Service Event' : 'Log New Service Event'}
-                        </span>
+                {/* Modal Header containing Status Alert if needed */}
+                <div className="flex flex-col border-b border-slate-800 bg-slate-900">
+                    <div className="flex items-center justify-between px-6 py-4">
+                        <div className="flex items-center gap-2">
+                            <PenTool size={16} className="text-blue-500" />
+                            <span className="font-mono font-bold text-slate-100 uppercase tracking-wider">
+                                {initialData ? 'Edit Service Event' : 'Log New Service Event'}
+                            </span>
+                        </div>
+                        <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+                            <X size={20} />
+                        </button>
                     </div>
-                    <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
-                        <X size={20} />
-                    </button>
+
+                    {/* Review Alert */}
+                    {initialData?.status === 'review' && (
+                        <div className="px-6 py-2 bg-rose-950/30 border-t border-slate-800 flex items-center gap-2 text-rose-400">
+                            <AlertTriangle size={14} />
+                            <span className="text-xs font-bold font-mono uppercase tracking-wide">Attention: This event requires manager review</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Form Content */}
-                <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
+                <form className="p-6 overflow-y-auto flex-1 space-y-6">
+
+                    {/* Review Notes Section (Only show if in review or has notes) */}
+                    {(initialData?.status === 'review' || formData.reviewNotes) && (
+                        <div className="space-y-2 bg-slate-900/50 p-4 border border-rose-900/30 rounded-sm">
+                            <label className="text-[10px] uppercase font-bold text-rose-400 tracking-wider flex items-center gap-2">
+                                Review Notes / Action Items
+                            </label>
+                            <textarea
+                                className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-sm py-2 px-3 focus:border-rose-500 outline-none font-mono min-h-[60px]"
+                                placeholder="Enter notes for review..."
+                                value={formData.reviewNotes}
+                                onChange={e => setFormData({ ...formData, reviewNotes: e.target.value })}
+                            />
+                        </div>
+                    )}
 
                     {/* Category Selection */}
                     <div className="space-y-2">
@@ -202,72 +243,80 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                                 </button>
                             ))}
                         </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                        {/* Satisfaction Toggle */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Satisfaction</label>
-                            <div className="flex border border-slate-800 rounded-sm overflow-hidden">
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, satisfaction: 'good' })}
-                                    className={cn(
-                                        "flex-1 py-2 flex items-center justify-center gap-2 text-xs font-bold font-mono transition-colors",
-                                        formData.satisfaction === 'good' ? "bg-emerald-900/50 text-emerald-400" : "bg-slate-900 text-slate-600 hover:bg-slate-800"
-                                    )}
-                                >
-                                    <CheckCircle size={14} /> GOOD
-                                </button>
-                                <div className="w-px bg-slate-800"></div>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, satisfaction: 'bad' })}
-                                    className={cn(
-                                        "flex-1 py-2 flex items-center justify-center gap-2 text-xs font-bold font-mono transition-colors",
-                                        formData.satisfaction === 'bad' ? "bg-rose-900/50 text-rose-400" : "bg-slate-900 text-slate-600 hover:bg-slate-800"
-                                    )}
-                                >
-                                    <AlertTriangle size={14} /> BAD
-                                </button>
-                            </div>
-                        </div>
-
                         {/* Outcome */}
                         <div className="space-y-2">
                             <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Outcome</label>
-                            <select
-                                className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-sm py-2 px-3 focus:border-blue-500 outline-none appearance-none font-mono"
-                                value={formData.outcome}
-                                onChange={e => setFormData({ ...formData, outcome: e.target.value })}
-                            >
-                                <option value="Completed">Completed</option>
-                                <option value="Completed with Issues">Completed w/ Issues</option>
-                                <option value="No-show">No-show</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
+                            <div className="relative">
+                                <CheckCircle className="absolute left-3 top-2.5 text-slate-600" size={14} />
+                                <select
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-sm py-2 pl-9 pr-3 focus:border-blue-500 outline-none appearance-none font-mono"
+                                    value={formData.outcome}
+                                    onChange={e => setFormData({ ...formData, outcome: e.target.value })}
+                                >
+                                    <option>Completed</option>
+                                    <option>Completed with Issues</option>
+                                    <option>Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Satisfaction */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Satisfaction</label>
+                        <div className="flex gap-4">
+                            {(['good', 'neutral', 'bad'] as const).map(sat => (
+                                <label key={sat} className="flex items-center gap-2 cursor-pointer group">
+                                    <div className={cn(
+                                        "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
+                                        formData.satisfaction === sat
+                                            ? sat === 'good' ? "border-emerald-500 bg-emerald-500" :
+                                                sat === 'bad' ? "border-rose-500 bg-rose-500" : "border-slate-400 bg-slate-400"
+                                            : "border-slate-700 group-hover:border-slate-500"
+                                    )}>
+                                        {formData.satisfaction === sat && <CheckCircle size={10} className="text-slate-950" />}
+                                    </div>
+                                    <span className="text-xs font-mono uppercase text-slate-400 group-hover:text-slate-200">{sat}</span>
+                                </label>
+                            ))}
                         </div>
                     </div>
 
                 </form>
 
-                {/* Modal Footer */}
-                <div className="p-4 border-t border-slate-800 bg-slate-900 flex justify-end gap-3 rounded-b-sm">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="px-4 py-2 text-xs font-mono font-bold text-slate-400 hover:text-white transition-colors"
-                    >
-                        CANCEL [ESC]
+                {/* Footer Actions */}
+                <div className="p-4 border-t border-slate-800 bg-slate-900 flex justify-between items-center">
+                    <button onClick={onClose} className="px-4 py-2 text-xs font-mono text-slate-400 hover:text-white transition-colors">
+                        CANCEL
                     </button>
-                    <button
-                        type="button"
-                        onClick={handleSubmit} // Trigger form submit logic
-                        className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold rounded-sm shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all"
-                    >
-                        {initialData ? 'UPDATE ENTRY' : 'CONFIRM ENTRY'}
-                    </button>
+
+                    <div className="flex gap-2">
+                        {initialData?.status === 'review' ? (
+                            <>
+                                <button
+                                    onClick={() => handleTransition('pending')}
+                                    className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-mono font-bold rounded-sm transition-all flex items-center gap-2"
+                                >
+                                    <CheckCircle size={14} />
+                                    APPROVE TO PENDING
+                                </button>
+                                <button
+                                    onClick={() => handleTransition('resolved')}
+                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold rounded-sm shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all flex items-center gap-2"
+                                >
+                                    <CheckCircle size={14} />
+                                    RESOLVE CASE
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={handleSubmit}
+                                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold rounded-sm shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all"
+                            >
+                                {initialData ? 'UPDATE ENTRY' : 'CONFIRM ENTRY'}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
