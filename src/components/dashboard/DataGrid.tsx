@@ -1,17 +1,6 @@
 import { AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
-
-// Mock Data structure
-interface Event {
-    id: string;
-    timestamp: string;
-    status: 'resolved' | 'review' | 'pending' | 'void';
-    vendor: string;
-    location: string;
-    type: string;
-    price: number;
-    satisfaction: 'good' | 'bad' | 'neutral';
-}
+import { Event } from '../../types';
 
 interface DataGridProps {
     data: Event[];

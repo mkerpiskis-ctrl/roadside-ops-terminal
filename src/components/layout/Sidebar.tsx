@@ -2,16 +2,27 @@ import React from 'react';
 import { LayoutDashboard, ClipboardList, Users, BarChart3, Radio, ShieldAlert } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
+export type ViewType = 'dashboard' | 'service_log' | 'vendors' | 'analytics';
+
+interface SidebarProps {
+    currentView: ViewType;
+    onNavigate: (view: ViewType) => void;
+    onFilterVendor: (vendor: string) => void;
+    activeVendorFilter: string | null;
+}
+
 interface SidebarItemProps {
     icon: React.ElementType;
     label: string;
     active?: boolean;
     alertCount?: number;
+    onClick: () => void;
 }
 
-const SidebarItem = ({ icon: Icon, label, active, alertCount }: SidebarItemProps) => {
+const SidebarItem = ({ icon: Icon, label, active, alertCount, onClick }: SidebarItemProps) => {
     return (
         <div
+            onClick={onClick}
             className={cn(
                 "flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-colors text-sm font-medium mb-1",
                 active
@@ -32,7 +43,7 @@ const SidebarItem = ({ icon: Icon, label, active, alertCount }: SidebarItemProps
     );
 };
 
-export function Sidebar() {
+export function Sidebar({ currentView, onNavigate, onFilterVendor, activeVendorFilter }: SidebarProps) {
     return (
         <aside className="w-64 bg-slate-950 border-r border-slate-900 h-screen fixed left-0 top-0 flex flex-col z-50">
             {/* Brand / Logo Area */}
@@ -50,10 +61,31 @@ export function Sidebar() {
             <div className="flex-1 overflow-y-auto py-4 px-2">
                 <div className="mb-6">
                     <p className="px-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2">Main Module</p>
-                    <SidebarItem icon={LayoutDashboard} label="Dashboard" active />
-                    <SidebarItem icon={ClipboardList} label="Service Log" alertCount={3} />
-                    <SidebarItem icon={Users} label="Vendor Watchlist" />
-                    <SidebarItem icon={BarChart3} label="Analytics" />
+                    <SidebarItem
+                        icon={LayoutDashboard}
+                        label="Dashboard"
+                        active={currentView === 'dashboard'}
+                        onClick={() => onNavigate('dashboard')}
+                    />
+                    <SidebarItem
+                        icon={ClipboardList}
+                        label="Service Log"
+                        alertCount={3}
+                        active={currentView === 'service_log'}
+                        onClick={() => onNavigate('service_log')}
+                    />
+                    <SidebarItem
+                        icon={Users}
+                        label="Vendor Watchlist"
+                        active={currentView === 'vendors'}
+                        onClick={() => onNavigate('vendors')}
+                    />
+                    <SidebarItem
+                        icon={BarChart3}
+                        label="Analytics"
+                        active={currentView === 'analytics'}
+                        onClick={() => onNavigate('analytics')}
+                    />
                 </div>
 
                 <div>
@@ -64,9 +96,22 @@ export function Sidebar() {
                             { name: "QuickFix", status: "warn", loc: "AL" },
                             { name: "Metro Recovery", status: "crit", loc: "NY" }
                         ].map((vendor, i) => (
-                            <div key={i} className="px-3 py-2 rounded hover:bg-slate-900/50 cursor-pointer group">
+                            <div
+                                key={i}
+                                onClick={() => {
+                                    onFilterVendor(vendor.name);
+                                    onNavigate('dashboard');
+                                }}
+                                className={cn(
+                                    "px-3 py-2 rounded hover:bg-slate-900/50 cursor-pointer group transition-colors",
+                                    activeVendorFilter === vendor.name ? "bg-slate-900 ring-1 ring-slate-700" : ""
+                                )}
+                            >
                                 <div className="flex justify-between items-center mb-0.5">
-                                    <span className="text-xs text-slate-300 group-hover:text-white font-mono">{vendor.name}</span>
+                                    <span className={cn(
+                                        "text-xs font-mono transition-colors",
+                                        activeVendorFilter === vendor.name ? "text-blue-400" : "text-slate-300 group-hover:text-white"
+                                    )}>{vendor.name}</span>
                                     <span className={cn(
                                         "w-1.5 h-1.5 rounded-full",
                                         vendor.status === 'ok' ? "bg-emerald-500" : vendor.status === 'warn' ? "bg-amber-500" : "bg-rose-500"

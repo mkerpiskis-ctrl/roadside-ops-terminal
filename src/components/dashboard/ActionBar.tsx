@@ -2,9 +2,12 @@ import { Search, Filter, Plus, ChevronDown } from 'lucide-react';
 
 interface ActionBarProps {
     onLogEvent: () => void;
+    onSearch: (query: string) => void;
+    onFilterStatus: (status: 'all' | 'review' | 'pending' | 'resolved') => void;
+    currentStatus: string;
 }
 
-export function ActionBar({ onLogEvent }: ActionBarProps) {
+export function ActionBar({ onLogEvent, onSearch, onFilterStatus, currentStatus }: ActionBarProps) {
     return (
         <div className="flex items-center justify-between bg-slate-950 border-b border-t border-slate-900 py-3 mb-6">
             {/* Search Input */}
@@ -14,6 +17,7 @@ export function ActionBar({ onLogEvent }: ActionBarProps) {
                 </div>
                 <input
                     type="text"
+                    onChange={(e) => onSearch(e.target.value)}
                     className="block w-full bg-slate-900 border border-slate-800 text-slate-300 text-sm rounded-sm py-2 pl-10 pr-3 focus:outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-900 transition-all font-mono placeholder:text-slate-600"
                     placeholder="SEARCH TERMINAL (REF, VIN, VENDOR)..."
                 />
@@ -21,10 +25,16 @@ export function ActionBar({ onLogEvent }: ActionBarProps) {
 
             {/* Actions */}
             <div className="flex items-center gap-3">
-                {/* Filters Dropdown (Mock) */}
-                <button className="flex items-center gap-2 px-3 py-2 bg-slate-900 border border-slate-800 text-slate-400 text-xs font-mono hover:text-slate-200 hover:border-slate-700 transition-colors rounded-sm">
+                {/* Filters Dropdown (Mock - simple cycle for now or just a button) */}
+                <button
+                    onClick={() => {
+                        const map: Record<string, any> = { 'all': 'review', 'review': 'pending', 'pending': 'resolved', 'resolved': 'all' };
+                        onFilterStatus(map[currentStatus]);
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 bg-slate-900 border border-slate-800 text-slate-400 text-xs font-mono hover:text-slate-200 hover:border-slate-700 transition-colors rounded-sm"
+                >
                     <Filter size={14} />
-                    <span>FILTER: ALL</span>
+                    <span className="uppercase">FILTER: {currentStatus}</span>
                     <ChevronDown size={14} />
                 </button>
 
