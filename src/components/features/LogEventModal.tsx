@@ -266,7 +266,11 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                         <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Satisfaction</label>
                         <div className="flex gap-4">
                             {(['good', 'neutral', 'bad'] as const).map(sat => (
-                                <label key={sat} className="flex items-center gap-2 cursor-pointer group">
+                                <div
+                                    key={sat}
+                                    onClick={() => setFormData({ ...formData, satisfaction: sat })}
+                                    className="flex items-center gap-2 cursor-pointer group outline-none select-none"
+                                >
                                     <div className={cn(
                                         "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
                                         formData.satisfaction === sat
@@ -277,7 +281,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                                         {formData.satisfaction === sat && <CheckCircle size={10} className="text-slate-950" />}
                                     </div>
                                     <span className="text-xs font-mono uppercase text-slate-400 group-hover:text-slate-200">{sat}</span>
-                                </label>
+                                </div>
                             ))}
                         </div>
                     </div>

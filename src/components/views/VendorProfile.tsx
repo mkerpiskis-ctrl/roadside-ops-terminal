@@ -17,9 +17,12 @@ interface VendorProfileProps {
     };
     events: Event[];
     onBack: () => void;
+    onEditEvent: (event: Event) => void;
+    onDeleteEvent: (id: string) => void;
 }
 
-export function VendorProfile({ vendor, events, onBack }: VendorProfileProps) {
+export function VendorProfile({ vendor, events, onBack, onEditEvent, onDeleteEvent }: VendorProfileProps) {
+    // ... existing code ...
     // Filter events for this vendor
     const vendorEvents = useMemo(() => {
         return events.filter(e => e.vendor === vendor.name);
@@ -166,7 +169,11 @@ export function VendorProfile({ vendor, events, onBack }: VendorProfileProps) {
                 {/* History Data Grid */}
                 <div className="mb-6">
                     <h3 className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider">Service History</h3>
-                    <DataGrid data={vendorEvents} />
+                    <DataGrid
+                        data={vendorEvents}
+                        onEdit={onEditEvent}
+                        onDelete={onDeleteEvent}
+                    />
                 </div>
             </div>
         </div>

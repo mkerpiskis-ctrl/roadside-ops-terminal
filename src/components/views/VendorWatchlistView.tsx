@@ -16,9 +16,11 @@ const VENDORS = [
 
 interface VendorWatchlistViewProps {
     events: Event[];
+    onEditEvent: (event: Event) => void;
+    onDeleteEvent: (id: string) => void;
 }
 
-export function VendorWatchlistView({ events }: VendorWatchlistViewProps) {
+export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: VendorWatchlistViewProps) {
     const [filter, setFilter] = useState('');
     const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
 
@@ -31,6 +33,8 @@ export function VendorWatchlistView({ events }: VendorWatchlistViewProps) {
                     vendor={vendor}
                     events={events}
                     onBack={() => setSelectedVendorId(null)}
+                    onEditEvent={onEditEvent}
+                    onDeleteEvent={onDeleteEvent}
                 />
             );
         }

@@ -42,10 +42,11 @@ export function DataGrid({ data, onEdit, onDelete }: DataGridProps) {
                         {data.map((row, i) => (
                             <tr
                                 key={row.id}
+                                onClick={() => onEdit && onEdit(row)}
                                 className={cn(
-                                    "border-b border-slate-800 hover:bg-slate-800/50 transition-colors",
+                                    "border-b border-slate-800 transition-colors cursor-pointer", // Added cursor-pointer
                                     i % 2 === 0 ? "bg-slate-900/50" : "bg-slate-950",
-                                    row.satisfaction === 'bad' && "bg-rose-950/10 hover:bg-rose-950/20"
+                                    row.satisfaction === 'bad' ? "bg-rose-950/10 hover:bg-rose-950/20" : "hover:bg-slate-800/50"
                                 )}
                             >
                                 <td className="py-2.5 px-3 border-r border-slate-800 whitespace-nowrap text-slate-500">
@@ -80,12 +81,18 @@ export function DataGrid({ data, onEdit, onDelete }: DataGridProps) {
                                     <td className="py-2.5 px-3 text-center">
                                         <div className="flex items-center justify-center gap-2">
                                             {onEdit && (
-                                                <button onClick={() => onEdit(row)} className="text-slate-500 hover:text-blue-400 transition-colors">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); onEdit(row); }}
+                                                    className="text-slate-500 hover:text-blue-400 transition-colors"
+                                                >
                                                     <Pencil size={12} />
                                                 </button>
                                             )}
                                             {onDelete && (
-                                                <button onClick={() => onDelete(row.id)} className="text-slate-500 hover:text-rose-400 transition-colors">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); onDelete(row.id); }}
+                                                    className="text-slate-500 hover:text-rose-400 transition-colors"
+                                                >
                                                     <Trash2 size={12} />
                                                 </button>
                                             )}

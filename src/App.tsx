@@ -97,7 +97,11 @@ function App() {
             )}
 
             {currentView === 'vendors' && (
-                <VendorWatchlistView events={data} />
+                <VendorWatchlistView
+                    events={data}
+                    onEditEvent={handleEditEvent}
+                    onDeleteEvent={handleDeleteEvent}
+                />
             )}
 
             {currentView === 'analytics' && (
