@@ -9,26 +9,55 @@ interface DashboardProps {
     vendorFilter: string | null;
     data: Event[];
     onLogEvent: (event: Event) => void;
+    onEditEvent: (event: Event) => void;
+    onDeleteEvent: (id: string) => void;
 }
 
-export function Dashboard({ vendorFilter, data, onLogEvent }: DashboardProps) {
+export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDeleteEvent }: DashboardProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingEvent, setEditingEvent] = useState<Event | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'review' | 'pending' | 'resolved'>('all');
 
     const handleFormSubmit = (formData: any) => {
-        // Add new event to top of list
-        const newEvent: Event = {
-            id: `EV-${Math.floor(Math.random() * 10000)}`,
-            timestamp: new Date().toISOString().slice(0, 16).replace('T', ' '),
-            status: (formData.outcome === 'Completed' ? 'resolved' : 'review') as Event['status'],
-            vendor: formData.vendor || 'Unknown Vendor',
-            location: formData.location || 'Unknown Loc',
-            type: formData.type,
-            price: Number(formData.price) || 0,
-            satisfaction: formData.satisfaction
-        };
-        onLogEvent(newEvent);
+        const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+        if (editingEvent) {
+            const updatedEvent: Event = {
+                ...editingEvent,
+                status: (formData.outcome === 'Completed' ? 'resolved' : 'review') as Event['status'],
+                vendor: formData.vendor || 'Unknown Vendor',
+                location: formData.location || 'Unknown Loc',
+                type: formData.type,
+                price: Number(formData.price) || 0,
+                satisfaction: formData.satisfaction,
+                // Preserve original ID and timestamp if desired, or update timestamp
+            };
+            onEditEvent(updatedEvent);
+        } else {
+            // Add new event
+            const newEvent: Event = {
+                id: `EV-${Math.floor(Math.random() * 10000)}`,
+                timestamp: timestamp,
+                status: (formData.outcome === 'Completed' ? 'resolved' : 'review') as Event['status'],
+                vendor: formData.vendor || 'Unknown Vendor',
+                location: formData.location || 'Unknown Loc',
+                type: formData.type,
+                price: Number(formData.price) || 0,
+                satisfaction: formData.satisfaction
+            };
+            onLogEvent(newEvent);
+        }
+    };
+
+    const openLogModal = () => {
+        setEditingEvent(null);
+        setIsModalOpen(true);
+    };
+
+    const handleEditClick = (event: Event) => {
+        setEditingEvent(event);
+        setIsModalOpen(true);
     };
 
     // Filter Data Source
@@ -103,18 +132,23 @@ export function Dashboard({ vendorFilter, data, onLogEvent }: DashboardProps) {
                 )}
 
                 <ActionBar
-                    onLogEvent={() => setIsModalOpen(true)}
+                    onLogEvent={openLogModal}
                     onSearch={setSearchQuery}
                     onFilterStatus={setStatusFilter}
                     currentStatus={statusFilter}
                 />
-                <DataGrid data={filteredData} />
+                <DataGrid
+                    data={filteredData}
+                    onEdit={handleEditClick}
+                    onDelete={onDeleteEvent}
+                />
             </div>
 
             <LogEventModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSubmit={handleFormSubmit}
+                initialData={editingEvent}
             />
         </div>
     );

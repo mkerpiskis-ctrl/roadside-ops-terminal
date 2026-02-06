@@ -1,9 +1,11 @@
-import { AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, XCircle, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Event } from '../../types';
 
 interface DataGridProps {
     data: Event[];
+    onEdit?: (event: Event) => void;
+    onDelete?: (id: string) => void;
 }
 
 const StatusBadge = ({ status }: { status: Event['status'] }) => {
@@ -19,7 +21,7 @@ const StatusBadge = ({ status }: { status: Event['status'] }) => {
     }
 };
 
-export function DataGrid({ data }: DataGridProps) {
+export function DataGrid({ data, onEdit, onDelete }: DataGridProps) {
     return (
         <div className="w-full border border-slate-800 rounded-sm overflow-hidden bg-slate-950">
             <div className="overflow-x-auto">
@@ -32,7 +34,8 @@ export function DataGrid({ data }: DataGridProps) {
                             <th className="py-2 px-3 border-r border-slate-900">Location</th>
                             <th className="py-2 px-3 border-r border-slate-900">Service Type</th>
                             <th className="py-2 px-3 border-r border-slate-900 text-right w-24">Price</th>
-                            <th className="py-2 px-3 w-24 text-center">Sat.</th>
+                            <th className="py-2 px-3 w-24 text-center border-r border-slate-900">Sat.</th>
+                            {(onEdit || onDelete) && <th className="py-2 px-3 w-16 text-center">Actions</th>}
                         </tr>
                     </thead>
                     <tbody className="text-xs font-mono text-slate-300">
@@ -66,13 +69,29 @@ export function DataGrid({ data }: DataGridProps) {
                                 )}>
                                     {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(row.price)}
                                 </td>
-                                <td className="py-2.5 px-3 text-center">
+                                <td className="py-2.5 px-3 text-center border-r border-slate-800">
                                     <span className={cn(
                                         "inline-block w-2 h-2 rounded-full",
                                         row.satisfaction === 'good' ? "bg-emerald-500" :
                                             row.satisfaction === 'bad' ? "bg-rose-500" : "bg-slate-600"
                                     )} />
                                 </td>
+                                {(onEdit || onDelete) && (
+                                    <td className="py-2.5 px-3 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            {onEdit && (
+                                                <button onClick={() => onEdit(row)} className="text-slate-500 hover:text-blue-400 transition-colors">
+                                                    <Pencil size={12} />
+                                                </button>
+                                            )}
+                                            {onDelete && (
+                                                <button onClick={() => onDelete(row.id)} className="text-slate-500 hover:text-rose-400 transition-colors">
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>

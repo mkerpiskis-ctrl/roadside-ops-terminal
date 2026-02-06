@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, CheckCircle, AlertTriangle, DollarSign, MapPin, Truck, PenTool } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { Event } from '../../types';
 
 interface LogEventModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (data: any) => void;
+    initialData?: Event | null;
 }
 
 const SERVICE_TYPES = [
@@ -18,7 +20,7 @@ const FLAGS = [
     'Waiting Time', 'Parts Run', 'Extra Equipment'
 ];
 
-export function LogEventModal({ isOpen, onClose, onSubmit }: LogEventModalProps) {
+export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEventModalProps) {
     if (!isOpen) return null;
 
     const [formData, setFormData] = useState({
@@ -31,6 +33,33 @@ export function LogEventModal({ isOpen, onClose, onSubmit }: LogEventModalProps)
         flags: [] as string[],
         outcome: 'Completed'
     });
+
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                category: 'Roadside', // Default or derive from type if stored
+                type: initialData.type,
+                location: initialData.location,
+                vendor: initialData.vendor,
+                price: initialData.price.toString(),
+                satisfaction: initialData.satisfaction,
+                flags: [], // Would need to be stored in Event if relevant
+                outcome: initialData.status === 'resolved' ? 'Completed' : 'Completed with Issues'
+            });
+        } else {
+            // Reset form for new entry
+            setFormData({
+                category: 'Roadside',
+                type: 'Roadside Service',
+                location: '',
+                vendor: '',
+                price: '',
+                satisfaction: 'good',
+                flags: [],
+                outcome: 'Completed'
+            });
+        }
+    }, [initialData, isOpen]);
 
     const toggleFlag = (flag: string) => {
         setFormData(prev => ({
@@ -55,7 +84,9 @@ export function LogEventModal({ isOpen, onClose, onSubmit }: LogEventModalProps)
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900">
                     <div className="flex items-center gap-2">
                         <PenTool size={16} className="text-blue-500" />
-                        <span className="font-mono font-bold text-slate-100 uppercase tracking-wider">Log New Service Event</span>
+                        <span className="font-mono font-bold text-slate-100 uppercase tracking-wider">
+                            {initialData ? 'Edit Service Event' : 'Log New Service Event'}
+                        </span>
                     </div>
                     <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
                         <X size={20} />
@@ -235,7 +266,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit }: LogEventModalProps)
                         onClick={handleSubmit} // Trigger form submit logic
                         className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold rounded-sm shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all"
                     >
-                        CONFIRM ENTRY
+                        {initialData ? 'UPDATE ENTRY' : 'CONFIRM ENTRY'}
                     </button>
                 </div>
             </div>

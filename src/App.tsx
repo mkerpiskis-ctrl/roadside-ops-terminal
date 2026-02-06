@@ -42,6 +42,14 @@ function App() {
         setData([newEvent, ...data]);
     };
 
+    const handleEditEvent = (updatedEvent: Event) => {
+        setData(data.map(ev => ev.id === updatedEvent.id ? updatedEvent : ev));
+    };
+
+    const handleDeleteEvent = (id: string) => {
+        setData(data.filter(ev => ev.id !== id));
+    };
+
     return (
         <Layout
             currentView={currentView}
@@ -54,6 +62,8 @@ function App() {
                     vendorFilter={vendorFilter}
                     data={data}
                     onLogEvent={handleLogEvent}
+                    onEditEvent={handleEditEvent}
+                    onDeleteEvent={handleDeleteEvent}
                 />
             )}
 
@@ -61,6 +71,8 @@ function App() {
                 <ServiceLogView
                     data={data}
                     onLogEvent={handleLogEvent}
+                    onEditEvent={handleEditEvent}
+                    onDeleteEvent={handleDeleteEvent}
                 />
             )}
 

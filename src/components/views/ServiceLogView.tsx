@@ -7,10 +7,13 @@ import { Event } from '../../types';
 interface ServiceLogViewProps {
     data: Event[];
     onLogEvent: (event: Event) => void;
+    onEditEvent: (event: Event) => void;
+    onDeleteEvent: (id: string) => void;
 }
 
-export function ServiceLogView({ data, onLogEvent }: ServiceLogViewProps) {
+export function ServiceLogView({ data, onLogEvent, onEditEvent, onDeleteEvent }: ServiceLogViewProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingEvent, setEditingEvent] = useState<Event | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'review' | 'pending' | 'resolved'>('all');
 
@@ -40,14 +43,18 @@ export function ServiceLogView({ data, onLogEvent }: ServiceLogViewProps) {
             </div>
 
             <ActionBar
-                onLogEvent={() => setIsModalOpen(true)}
+                onLogEvent={() => { setEditingEvent(null); setIsModalOpen(true); }}
                 onSearch={setSearchQuery}
                 onFilterStatus={setStatusFilter}
                 currentStatus={statusFilter}
             />
 
             <div className="flex-1 overflow-hidden flex flex-col">
-                <DataGrid data={filteredData} />
+                <DataGrid
+                    data={filteredData}
+                    onEdit={(ev) => { setEditingEvent(ev); setIsModalOpen(true); }}
+                    onDelete={onDeleteEvent}
+                />
 
                 {/* Mock Pagination Footer */}
                 <div className="mt-4 flex items-center justify-between border-t border-slate-900 pt-4 text-xs font-mono text-slate-500">
@@ -62,18 +69,33 @@ export function ServiceLogView({ data, onLogEvent }: ServiceLogViewProps) {
             <LogEventModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
+                initialData={editingEvent}
                 onSubmit={(formData) => {
-                    const newEvent: Event = {
-                        id: `EV-${Math.floor(Math.random() * 10000)}`,
-                        timestamp: new Date().toISOString().slice(0, 16).replace('T', ' '),
-                        status: (formData.outcome === 'Completed' ? 'resolved' : 'review') as Event['status'],
-                        vendor: formData.vendor || 'Unknown Vendor',
-                        location: formData.location || 'Unknown Loc',
-                        type: formData.type,
-                        price: Number(formData.price) || 0,
-                        satisfaction: formData.satisfaction
-                    };
-                    onLogEvent(newEvent);
+                    const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+                    if (editingEvent) {
+                        const updatedEvent: Event = {
+                            ...editingEvent,
+                            status: (formData.outcome === 'Completed' ? 'resolved' : 'review') as Event['status'],
+                            vendor: formData.vendor || 'Unknown Vendor',
+                            location: formData.location || 'Unknown Loc',
+                            type: formData.type,
+                            price: Number(formData.price) || 0,
+                            satisfaction: formData.satisfaction,
+                        };
+                        onEditEvent(updatedEvent);
+                    } else {
+                        const newEvent: Event = {
+                            id: `EV-${Math.floor(Math.random() * 10000)}`,
+                            timestamp: timestamp,
+                            status: (formData.outcome === 'Completed' ? 'resolved' : 'review') as Event['status'],
+                            vendor: formData.vendor || 'Unknown Vendor',
+                            location: formData.location || 'Unknown Loc',
+                            type: formData.type,
+                            price: Number(formData.price) || 0,
+                            satisfaction: formData.satisfaction
+                        };
+                        onLogEvent(newEvent);
+                    }
                 }}
             />
         </div>
