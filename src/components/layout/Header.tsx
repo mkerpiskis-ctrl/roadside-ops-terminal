@@ -1,4 +1,4 @@
-import { Bell, Wifi, Search, ChevronRight } from 'lucide-react';
+import { Bell, Search, ChevronRight } from 'lucide-react';
 
 export function Header() {
     return (
