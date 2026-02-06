@@ -1,0 +1,97 @@
+import { useState } from 'react';
+import { Search, MapPin, Star, MoreHorizontal, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { cn } from '../../lib/utils';
+
+// Mock Vendor Data
+const VENDORS = [
+    { id: 'V-001', name: 'ABS Towing', location: 'Dallas, TX', rating: 4.8, status: 'ok', totalJobs: 142, reliability: 98, joined: '2022-03-15' },
+    { id: 'V-002', name: 'Midwest Recovery', location: 'Chicago, IL', rating: 4.2, status: 'ok', totalJobs: 89, reliability: 94, joined: '2023-01-10' },
+    { id: 'V-003', name: 'QuickFix Mobile', location: 'Atlanta, GA', rating: 3.5, status: 'warn', totalJobs: 215, reliability: 82, joined: '2021-11-05' },
+    { id: 'V-004', name: 'Lone Star Tire', location: 'Denver, CO', rating: 4.9, status: 'ok', totalJobs: 56, reliability: 99, joined: '2023-08-20' },
+    { id: 'V-005', name: 'Global Heavy Ops', location: 'Phoenix, AZ', rating: 3.1, status: 'crit', totalJobs: 34, reliability: 65, joined: '2024-01-12' },
+    { id: 'V-006', name: 'Metro Recovery', location: 'New York, NY', rating: 2.8, status: 'crit', totalJobs: 12, reliability: 45, joined: '2024-02-01' },
+];
+
+export function VendorWatchlistView() {
+    const [filter, setFilter] = useState('');
+
+    const filteredVendors = VENDORS.filter(v =>
+        v.name.toLowerCase().includes(filter.toLowerCase()) ||
+        v.location.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    return (
+        <div className="h-full flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h2 className="text-xl font-bold text-slate-100 tracking-wide">VENDOR WATCHLIST</h2>
+                    <p className="text-xs text-slate-500 font-mono">PREFERRED PARTNER NETWORK</p>
+                </div>
+                <div className="relative w-64">
+                    <Search className="absolute left-3 top-2.5 text-slate-600" size={14} />
+                    <input
+                        type="text"
+                        placeholder="SEARCH VENDORS..."
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 rounded pl-9 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500 font-mono"
+                    />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto pb-4">
+                {filteredVendors.map((vendor) => (
+                    <div key={vendor.id} className="bg-slate-900/50 border border-slate-800 rounded p-4 hover:border-slate-700 transition-all group">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className={cn(
+                                    "w-10 h-10 rounded flex items-center justify-center font-bold text-slate-950",
+                                    vendor.status === 'ok' ? "bg-emerald-500" : vendor.status === 'warn' ? "bg-amber-500" : "bg-rose-500"
+                                )}>
+                                    {vendor.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-slate-200 text-sm">{vendor.name}</h3>
+                                    <div className="flex items-center gap-1 text-[10px] text-slate-500 font-mono">
+                                        <MapPin size={10} />
+                                        {vendor.location}
+                                    </div>
+                                </div>
+                            </div>
+                            <button className="text-slate-600 hover:text-slate-300"><MoreHorizontal size={16} /></button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                            <div className="bg-slate-950 p-2 rounded border border-slate-800/50">
+                                <span className="text-[10px] text-slate-500 block mb-1">RELIABILITY</span>
+                                <div className="flex items-center gap-2">
+                                    <span className={cn(
+                                        "text-lg font-mono font-bold",
+                                        vendor.reliability > 90 ? "text-emerald-400" : vendor.reliability > 75 ? "text-amber-400" : "text-rose-400"
+                                    )}>{vendor.reliability}%</span>
+                                    {vendor.reliability > 90 ? <ShieldCheck size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-amber-500" />}
+                                </div>
+                            </div>
+                            <div className="bg-slate-950 p-2 rounded border border-slate-800/50">
+                                <span className="text-[10px] text-slate-500 block mb-1">TOTAL JOBS</span>
+                                <span className="text-lg font-mono font-bold text-slate-300">{vendor.totalJobs}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-3 border-t border-slate-800/50">
+                            <div className="flex items-center gap-1">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <Star key={i} size={12} className={cn(i < Math.floor(vendor.rating) ? "text-amber-400 fill-amber-400" : "text-slate-800")} />
+                                ))}
+                                <span className="text-xs text-slate-500 ml-1">({vendor.rating})</span>
+                            </div>
+                            <div className="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">
+                                ID: {vendor.id}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}

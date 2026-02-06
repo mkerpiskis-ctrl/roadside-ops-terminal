@@ -7,27 +7,16 @@ import { Event } from '../../types';
 
 interface DashboardProps {
     vendorFilter: string | null;
+    data: Event[];
+    onLogEvent: (event: Event) => void;
 }
 
-// Mock Data
-const MOCK_DATA: Event[] = Array.from({ length: 15 }).map((_, i) => ({
-    id: `EV-${1000 + i}`,
-    timestamp: `2024-02-06 14:${String(30 + i).padStart(2, '0')}`,
-    status: (i % 5 === 0 ? 'review' : i % 3 === 0 ? 'pending' : 'resolved') as Event['status'],
-    vendor: ['ABS Towing', 'Midwest Recovery', 'QuickFix Mobile', 'Lone Star Tire', 'Global Heavy Ops'][i % 5],
-    location: ['Dallas, TX', 'Chicago, IL', 'Atlanta, GA', 'Denver, CO', 'Phoenix, AZ'][i % 5],
-    type: ['Heavy Tow', 'Tire Service', 'Lockout', 'Winch-out', 'Jump Start'][i % 5],
-    price: [750, 1200, 4500, 350, 200][i % 5] + (Math.random() * 100),
-    satisfaction: (i % 5 === 0 ? 'bad' : 'good') as Event['satisfaction'],
-}));
-
-export function Dashboard({ vendorFilter }: DashboardProps) {
+export function Dashboard({ vendorFilter, data, onLogEvent }: DashboardProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [data, setData] = useState(MOCK_DATA);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'review' | 'pending' | 'resolved'>('all');
 
-    const handleLogEvent = (formData: any) => {
+    const handleFormSubmit = (formData: any) => {
         // Add new event to top of list
         const newEvent: Event = {
             id: `EV-${Math.floor(Math.random() * 10000)}`,
@@ -39,7 +28,7 @@ export function Dashboard({ vendorFilter }: DashboardProps) {
             price: Number(formData.price) || 0,
             satisfaction: formData.satisfaction
         };
-        setData([newEvent, ...data]);
+        onLogEvent(newEvent);
     };
 
     // Filter Data Source
@@ -125,7 +114,7 @@ export function Dashboard({ vendorFilter }: DashboardProps) {
             <LogEventModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSubmit={handleLogEvent}
+                onSubmit={handleFormSubmit}
             />
         </div>
     );
