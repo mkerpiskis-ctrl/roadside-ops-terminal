@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Search, MapPin, Star, MoreHorizontal, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { Event } from '../../types';
+import { VendorProfile } from './VendorProfile';
 
-// Mock Vendor Data
+// Mock Vendor Data (Ideally this would come from a prop or context as well)
 const VENDORS = [
     { id: 'V-001', name: 'ABS Towing', location: 'Dallas, TX', rating: 4.8, status: 'ok', totalJobs: 142, reliability: 98, joined: '2022-03-15' },
     { id: 'V-002', name: 'Midwest Recovery', location: 'Chicago, IL', rating: 4.2, status: 'ok', totalJobs: 89, reliability: 94, joined: '2023-01-10' },
@@ -12,9 +14,29 @@ const VENDORS = [
     { id: 'V-006', name: 'Metro Recovery', location: 'New York, NY', rating: 2.8, status: 'crit', totalJobs: 12, reliability: 45, joined: '2024-02-01' },
 ];
 
-export function VendorWatchlistView() {
-    const [filter, setFilter] = useState('');
+interface VendorWatchlistViewProps {
+    events: Event[];
+}
 
+export function VendorWatchlistView({ events }: VendorWatchlistViewProps) {
+    const [filter, setFilter] = useState('');
+    const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+
+    // Profile View
+    if (selectedVendorId) {
+        const vendor = VENDORS.find(v => v.id === selectedVendorId);
+        if (vendor) {
+            return (
+                <VendorProfile
+                    vendor={vendor}
+                    events={events}
+                    onBack={() => setSelectedVendorId(null)}
+                />
+            );
+        }
+    }
+
+    // List View
     const filteredVendors = VENDORS.filter(v =>
         v.name.toLowerCase().includes(filter.toLowerCase()) ||
         v.location.toLowerCase().includes(filter.toLowerCase())
@@ -41,7 +63,11 @@ export function VendorWatchlistView() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto pb-4">
                 {filteredVendors.map((vendor) => (
-                    <div key={vendor.id} className="bg-slate-900/50 border border-slate-800 rounded p-4 hover:border-slate-700 transition-all group">
+                    <div
+                        key={vendor.id}
+                        onClick={() => setSelectedVendorId(vendor.id)}
+                        className="cursor-pointer bg-slate-900/50 border border-slate-800 rounded p-4 hover:border-slate-600 hover:bg-slate-900 transition-all group active:scale-[0.98]"
+                    >
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
                                 <div className={cn(
@@ -51,7 +77,7 @@ export function VendorWatchlistView() {
                                     {vendor.name.charAt(0)}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-200 text-sm">{vendor.name}</h3>
+                                    <h3 className="font-bold text-slate-200 text-sm group-hover:text-blue-400 transition-colors">{vendor.name}</h3>
                                     <div className="flex items-center gap-1 text-[10px] text-slate-500 font-mono">
                                         <MapPin size={10} />
                                         {vendor.location}
