@@ -92,7 +92,8 @@ import { supabase } from '../../lib/supabase';
 // ...
 
 export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: VendorWatchlistViewProps) {
-    const [vendors, setVendors] = useState<VendorData[]>(INITIAL_VENDORS);
+    const [vendors, setVendors] = useState<VendorData[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [filter, setFilter] = useState('');
     const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -100,27 +101,45 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
     // Fetch Vendors from Supabase
     useEffect(() => {
         const fetchVendors = async () => {
-            const { data: remoteVendors, error } = await supabase
-                .from('vendors')
-                .select('*')
-                .order('name');
+            setIsLoading(true);
+            try {
+                const { data: remoteVendors, error } = await supabase
+                    .from('vendors')
+                    .select('*')
+                    .order('name');
 
-            if (!error) {
+                if (error) {
+                    throw error;
+                }
+
                 if (remoteVendors && remoteVendors.length > 0) {
                     setVendors(remoteVendors);
-                } else if (!localStorage.getItem('roadside_vendors_seeded')) {
-                    // Seed if empty
-                    setVendors(INITIAL_VENDORS);
-                    localStorage.setItem('roadside_vendors_seeded', 'true');
-                    // Sync initial to DB
-                    await supabase.from('vendors').insert(INITIAL_VENDORS);
                 } else {
-                    setVendors(remoteVendors || []); // Ensure empty array if null
+                    // Database is empty. Check if we should seed.
+                    // We only seed if this is the very first run (no seeded flag)
+                    // OR if we want to ensure mock data always exists when empty (optional choice).
+                    // Let's stick to: If empty and not seeded, Seed.
+                    if (!localStorage.getItem('roadside_vendors_seeded')) {
+                        console.log("Seeding vendors...");
+                        const { error: insertError } = await supabase.from('vendors').insert(INITIAL_VENDORS);
+                        if (!insertError) {
+                            setVendors(INITIAL_VENDORS);
+                            localStorage.setItem('roadside_vendors_seeded', 'true');
+                        } else {
+                            console.error("Failed to seed vendors:", insertError);
+                            // Fallback: If DB insert fails (e.g. connection), show mock locally effectively?
+                            // No, better to show empty state than broken state.
+                        }
+                    } else {
+                        setVendors([]);
+                    }
                 }
-            } else {
-                console.log("Vendors fetch error:", error.message);
+            } catch (err) {
+                console.error("Vendors fetch error:", err);
                 const saved = localStorage.getItem('roadside_vendors');
                 if (saved) setVendors(JSON.parse(saved));
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchVendors();
@@ -154,6 +173,15 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
             console.error('Error creating vendor:', error);
         }
     };
+
+    // Loading State
+    if (isLoading) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
 
     // Profile View
     if (selectedVendorId) {
