@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, CheckCircle, AlertTriangle, DollarSign, MapPin, Truck, PenTool } from 'lucide-react';
+import { X, CheckCircle, AlertTriangle, DollarSign, MapPin, Truck, PenTool, Star } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Event } from '../../types';
 import { supabase } from '../../lib/supabase';

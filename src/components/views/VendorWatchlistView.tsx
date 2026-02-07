@@ -284,9 +284,11 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
                         <div className="flex items-center justify-between pt-3 border-t border-slate-800/50">
                             <div className="flex items-center gap-1">
                                 {Array.from({ length: 5 }).map((_, i) => (
-                                    <Star key={i} size={12} className={cn(i < Math.floor(vendor.rating) ? "text-amber-400 fill-amber-400" : "text-slate-800")} />
+                                    <Star key={i} size={12} className={cn(i < Math.floor(vendor.rating || 0) ? "text-amber-400 fill-amber-400" : "text-slate-800")} />
                                 ))}
-                                <span className="text-xs text-slate-500 ml-1">({vendor.rating})</span>
+                                <span className="text-xs text-slate-500 ml-1">
+                                    {(vendor.rating || 0).toFixed(1)} <span className="text-slate-600">({vendor.review_count || 0})</span>
+                                </span>
                             </div>
                             <div className="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">
                                 ID: {vendor.id}

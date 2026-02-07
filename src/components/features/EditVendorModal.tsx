@@ -7,6 +7,7 @@ export interface VendorData {
     name: string;
     location: string;
     rating: number;
+    review_count?: number;
     status: string;
     joined: string;
     reliability: number;
@@ -100,6 +101,19 @@ export function EditVendorModal({ vendor, isOpen, onClose, onSave }: EditVendorM
                                 className="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
                             />
                         </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Location (City, ST)</label>
+                            <input
+                                type="text"
+                                value={formData.location}
+                                onChange={e => setFormData({ ...formData, location: e.target.value })}
+                                placeholder="Dallas, TX"
+                                className="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Phone Number</label>
                             <input

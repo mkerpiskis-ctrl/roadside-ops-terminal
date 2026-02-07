@@ -10,6 +10,7 @@ create table events (
   price numeric,
   satisfaction text, -- Loosened for 'neutral'
   job_status text, -- New field for 'On Call', 'Completed', etc.
+  rating numeric, -- 1-5 Star Rating
   notes text,
   review_notes text 
 );
@@ -20,6 +21,7 @@ create table vendors (
   name text,
   location text,
   rating numeric,
+  review_count int default 0, -- Total number of reviews
   status text check (status in ('ok', 'warn', 'crit')),
   reliability int,
   joined text, -- Changed from joined_date to match code

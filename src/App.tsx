@@ -76,6 +76,34 @@ function App() {
         fetchRemoteData();
     }, []);
 
+    // Helper to update vendor stats
+    const updateVendorStats = async (vendorName: string, newRating: number) => {
+        if (!vendorName || !newRating) return;
+
+        // 1. Fetch current vendor data
+        const { data: vendors, error: fetchError } = await supabase
+            .from('vendors')
+            .select('*')
+            .eq('name', vendorName)
+            .single();
+
+        if (fetchError || !vendors) return;
+
+        // 2. Calculate new stats
+        const currentRating = Number(vendors.rating) || 0;
+        const currentCount = Number(vendors.review_count) || 0;
+
+        const newCount = currentCount + 1;
+        // Running average formula: NewAvg = ((OldAvg * OldCount) + NewRating) / NewCount
+        const newAvg = ((currentRating * currentCount) + newRating) / newCount;
+
+        // 3. Update vendor
+        await supabase
+            .from('vendors')
+            .update({ rating: newAvg, review_count: newCount })
+            .eq('id', vendors.id);
+    };
+
     // Helper to sync events
     const syncEvent = async (event: Event, action: 'insert' | 'update' | 'delete') => {
         if (!isConnected) return; // Don't try if offline/mock
@@ -90,6 +118,7 @@ function App() {
             price: event.price,
             satisfaction: event.satisfaction,
             job_status: event.job_status,
+            rating: event.rating,
             notes: event.notes,
             review_notes: event.reviewNotes,
             created_at: event.created_at || event.timestamp
@@ -98,6 +127,10 @@ function App() {
         let res;
         if (action === 'insert') {
             res = await supabase.from('events').insert([dbEvent]);
+            // Helper: Update vendor rating if present
+            if (!res.error && dbEvent.vendor && dbEvent.rating && dbEvent.rating > 0) {
+                updateVendorStats(dbEvent.vendor, dbEvent.rating);
+            }
         } else if (action === 'update') {
             res = await supabase.from('events').update(dbEvent).eq('id', event.id);
         } else if (action === 'delete') {
