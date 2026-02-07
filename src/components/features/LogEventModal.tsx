@@ -455,45 +455,46 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                             </>
                         ) : (
                             <>
-                                {formData.job_status === 'On Call' || initialData?.status === 'pending' ? (
-                                    <>
-                                        <button
-                                            onClick={() => handleTransition('void')}
-                                            className="px-4 py-2 bg-slate-800 hover:bg-rose-900/50 text-slate-300 hover:text-rose-400 text-xs font-mono font-bold rounded-sm transition-all flex items-center gap-2 border border-transparent hover:border-rose-900"
-                                        >
-                                            <X size={14} />
-                                            CANCEL JOB
-                                        </button>
+                                <>
+                                    {initialData && (formData.job_status === 'On Call' || initialData.status === 'pending') ? (
+                                        <>
+                                            <button
+                                                onClick={() => handleTransition('void')}
+                                                className="px-4 py-2 bg-slate-800 hover:bg-rose-900/50 text-slate-300 hover:text-rose-400 text-xs font-mono font-bold rounded-sm transition-all flex items-center gap-2 border border-transparent hover:border-rose-900"
+                                            >
+                                                <X size={14} />
+                                                CANCEL JOB
+                                            </button>
+                                            <button
+                                                onClick={handleSubmit}
+                                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-mono font-bold rounded-sm transition-all"
+                                            >
+                                                UPDATE DETAILS
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setFormData(prev => ({ ...prev, job_status: 'Completed' }));
+                                                    handleTransition('resolved');
+                                                }}
+                                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold rounded-sm shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all flex items-center gap-2"
+                                            >
+                                                <CheckCircle size={14} />
+                                                COMPLETE JOB
+                                            </button>
+                                        </>
+                                    ) : (
                                         <button
                                             onClick={handleSubmit}
-                                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-mono font-bold rounded-sm transition-all"
+                                            className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-mono font-bold rounded-sm shadow-[0_0_10px_rgba(37,99,235,0.3)] transition-all"
                                         >
-                                            UPDATE DETAILS
+                                            {initialData ? 'UPDATE ENTRY' : 'CREATE EVENT'}
                                         </button>
-                                        <button
-                                            onClick={() => {
-                                                setFormData(prev => ({ ...prev, job_status: 'Completed' }));
-                                                handleTransition('resolved');
-                                            }}
-                                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold rounded-sm shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all flex items-center gap-2"
-                                        >
-                                            <CheckCircle size={14} />
-                                            COMPLETE JOB
-                                        </button>
-                                    </>
-                                ) : (
-                                    <button
-                                        onClick={handleSubmit}
-                                        className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-mono font-bold rounded-sm shadow-[0_0_10px_rgba(37,99,235,0.3)] transition-all"
-                                    >
-                                        {initialData ? 'UPDATE ENTRY' : 'CONFIRM ENTRY'}
-                                    </button>
-                                )}
-                            </>
+                                    )}
+                                </>
                         )}
+                            </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+            );
 }
