@@ -33,6 +33,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         satisfaction: 'good',
         flags: [] as string[],
         job_status: 'Completed',
+        rating: 0,
         reviewNotes: ''
     });
 
@@ -69,6 +70,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 satisfaction: initialData.satisfaction,
                 flags: [],
                 job_status: initialData.job_status || 'Completed',
+                rating: initialData.rating || 0,
                 reviewNotes: initialData.reviewNotes || ''
             });
         } else {
@@ -82,6 +84,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 satisfaction: 'good',
                 flags: [],
                 job_status: 'On Call', // Default for new? Or Completed? User asked for On Call option.
+                rating: 0,
                 reviewNotes: ''
             });
         }
@@ -279,6 +282,29 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                                     value={formData.price}
                                     onChange={e => setFormData({ ...formData, price: e.target.value })}
                                 />
+                            </div>
+                        </div>
+
+                        {/* Rating */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Rating</label>
+                            <div className="flex bg-slate-900 border border-slate-800 rounded-sm p-2 gap-1 justify-center h-[38px] items-center">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, rating: star })}
+                                        className="focus:outline-none transition-transform active:scale-95 group"
+                                    >
+                                        <Star
+                                            size={18}
+                                            className={cn(
+                                                "transition-colors",
+                                                (formData as any).rating >= star ? "fill-amber-400 text-amber-400" : "text-slate-700 group-hover:text-amber-400/50"
+                                            )}
+                                        />
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>
