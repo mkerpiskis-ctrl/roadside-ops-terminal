@@ -25,12 +25,14 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
         if (editingEvent) {
             const updatedEvent: Event = {
                 ...editingEvent,
-                status: (formData.outcome === 'Completed' ? 'resolved' : 'review') as Event['status'],
+                status: formData.status || editingEvent.status,
                 vendor: formData.vendor || 'Unknown Vendor',
                 location: formData.location || 'Unknown Loc',
                 type: formData.type,
                 price: Number(formData.price) || 0,
                 satisfaction: formData.satisfaction,
+                job_status: formData.job_status,
+                rating: formData.rating,
                 notes: formData.notes,
                 reviewNotes: formData.reviewNotes,
             };
@@ -40,13 +42,16 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
             const newEvent: Event = {
                 id: `EV-${Math.floor(Math.random() * 10000)}`,
                 timestamp: timestamp,
-                status: (formData.outcome === 'Completed' ? 'resolved' : 'review') as Event['status'],
+                status: formData.status || 'review',
                 vendor: formData.vendor || 'Unknown Vendor',
                 location: formData.location || 'Unknown Loc',
                 type: formData.type,
                 price: Number(formData.price) || 0,
                 satisfaction: formData.satisfaction,
+                job_status: formData.job_status,
+                rating: formData.rating,
                 notes: formData.notes,
+                reviewNotes: formData.reviewNotes,
                 created_at: new Date().toISOString()
             };
             onLogEvent(newEvent);

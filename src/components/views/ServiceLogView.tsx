@@ -81,6 +81,8 @@ export function ServiceLogView({ data, onLogEvent, onEditEvent, onDeleteEvent }:
                             type: formData.type,
                             price: Number(formData.price) || 0,
                             satisfaction: formData.satisfaction,
+                            job_status: formData.job_status,
+                            rating: formData.rating,
                             reviewNotes: formData.reviewNotes
                         };
                         onEditEvent(updatedEvent);
@@ -94,6 +96,8 @@ export function ServiceLogView({ data, onLogEvent, onEditEvent, onDeleteEvent }:
                             type: formData.type,
                             price: Number(formData.price) || 0,
                             satisfaction: formData.satisfaction,
+                            job_status: formData.job_status,
+                            rating: formData.rating,
                             reviewNotes: formData.reviewNotes
                         };
                         onLogEvent(newEvent);
