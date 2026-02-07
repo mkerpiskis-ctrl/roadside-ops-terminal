@@ -31,8 +31,6 @@ function App() {
     // Fetch Events and Notifications from Supabase
     useEffect(() => {
         const fetchRemoteData = async () => {
-            console.log("Supabase URL present:", !!import.meta.env.VITE_SUPABASE_URL);
-
             // 1. Events
             try {
                 const { data: events, error: eventError } = await supabase
@@ -41,7 +39,6 @@ function App() {
                     .order('created_at', { ascending: false });
 
                 if (!eventError) {
-                    console.log("Supabase connection established successfully.");
                     setConnectionStatus('online');
                     if (events && events.length > 0) {
                         setData(events);
@@ -50,12 +47,12 @@ function App() {
                     }
                 } else {
                     setConnectionStatus('error');
-                    console.error("Supabase Error Details:", eventError);
+                    console.error("Supabase connection error:", eventError.message);
                     const saved = localStorage.getItem('roadside_events');
                     setData(saved ? JSON.parse(saved) : MOCK_DATA);
                 }
             } catch (err) {
-                console.error("Critical Connection Error:", err);
+                console.error("Connection Error:", err);
                 setConnectionStatus('error');
                 setData(MOCK_DATA);
             }
