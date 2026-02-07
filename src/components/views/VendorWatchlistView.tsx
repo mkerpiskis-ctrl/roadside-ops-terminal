@@ -1,17 +1,84 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, MapPin, Star, MoreHorizontal, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Event } from '../../types';
 import { VendorProfile } from './VendorProfile';
+import { VendorData } from '../features/EditVendorModal';
 
 // Mock Vendor Data (Ideally this would come from a prop or context as well)
-const VENDORS = [
-    { id: 'V-001', name: 'ABS Towing', location: 'Dallas, TX', rating: 4.8, status: 'ok', totalJobs: 142, reliability: 98, joined: '2022-03-15' },
-    { id: 'V-002', name: 'Midwest Recovery', location: 'Chicago, IL', rating: 4.2, status: 'ok', totalJobs: 89, reliability: 94, joined: '2023-01-10' },
-    { id: 'V-003', name: 'QuickFix Mobile', location: 'Atlanta, GA', rating: 3.5, status: 'warn', totalJobs: 215, reliability: 82, joined: '2021-11-05' },
-    { id: 'V-004', name: 'Lone Star Tire', location: 'Denver, CO', rating: 4.9, status: 'ok', totalJobs: 56, reliability: 99, joined: '2023-08-20' },
-    { id: 'V-005', name: 'Global Heavy Ops', location: 'Phoenix, AZ', rating: 3.1, status: 'crit', totalJobs: 34, reliability: 65, joined: '2024-01-12' },
-    { id: 'V-006', name: 'Metro Recovery', location: 'New York, NY', rating: 2.8, status: 'crit', totalJobs: 12, reliability: 45, joined: '2024-02-01' },
+const INITIAL_VENDORS: VendorData[] = [
+    {
+        id: 'V-001',
+        name: 'ABS Towing',
+        location: 'Dallas, TX',
+        address: '124 Industrial Blvd, Dallas, TX 75207',
+        phone: '+1 (214) 555-0123',
+        services: ['Heavy Tow', 'Flatbed', 'Winch-out'],
+        rating: 4.8,
+        status: 'ok',
+        reliability: 98,
+        joined: '2022-03-15'
+    },
+    {
+        id: 'V-002',
+        name: 'Midwest Recovery',
+        location: 'Chicago, IL',
+        address: '8899 W North Ave, Melrose Park, IL 60160',
+        phone: '+1 (312) 555-0987',
+        services: ['Tire Service', 'Jump Start', 'Lockout'],
+        rating: 4.2,
+        status: 'ok',
+        reliability: 94,
+        joined: '2023-01-10'
+    },
+    {
+        id: 'V-003',
+        name: 'QuickFix Mobile',
+        location: 'Atlanta, GA',
+        address: '4500 Peachtree Rd, Atlanta, GA 30319',
+        phone: '+1 (404) 555-4567',
+        services: ['Fuel Delivery', 'Battery Replacement', 'Diagnostics'],
+        rating: 3.5,
+        status: 'warn',
+        reliability: 82,
+        joined: '2021-11-05'
+    },
+    {
+        id: 'V-004',
+        name: 'Lone Star Tire',
+        location: 'Denver, CO',
+        address: '2200 Colorado Blvd, Denver, CO 80205',
+        phone: '+1 (303) 555-7890',
+        services: ['Tire Service', 'Alignment'],
+        rating: 4.9,
+        status: 'ok',
+        reliability: 99,
+        joined: '2023-08-20'
+    },
+    {
+        id: 'V-005',
+        name: 'Global Heavy Ops',
+        location: 'Phoenix, AZ',
+        address: '101 S Central Ave, Phoenix, AZ 85004',
+        phone: '+1 (602) 555-3210',
+        services: ['Heavy Tow', 'Rotator Service', 'Hazmat Cleanup'],
+        rating: 3.1,
+        status: 'crit',
+        reliability: 65,
+        joined: '2024-01-12'
+    },
+    {
+        id: 'V-006',
+        name: 'Metro Recovery',
+        location: 'New York, NY',
+        address: '500 W 30th St, New York, NY 10001',
+        phone: '+1 (212) 555-6543',
+        services: ['Impround', 'Parking Enforcement', 'Light Duty'],
+        rating: 2.8,
+        status: 'crit',
+        reliability: 45,
+        joined: '2024-02-01'
+    },
 ];
 
 interface VendorWatchlistViewProps {
@@ -20,13 +87,53 @@ interface VendorWatchlistViewProps {
     onDeleteEvent: (id: string) => void;
 }
 
+import { supabase } from '../../lib/supabase';
+
+// ...
+
 export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: VendorWatchlistViewProps) {
+    const [vendors, setVendors] = useState<VendorData[]>(INITIAL_VENDORS);
     const [filter, setFilter] = useState('');
     const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
 
+    // Fetch Vendors from Supabase
+    useEffect(() => {
+        const fetchVendors = async () => {
+            const { data, error } = await supabase
+                .from('vendors')
+                .select('*')
+                .order('name');
+
+            if (!error && data && data.length > 0) {
+                setVendors(data);
+            } else {
+                // Fallback to local storage if available
+                const saved = localStorage.getItem('roadside_vendors');
+                if (saved) setVendors(JSON.parse(saved));
+            }
+        };
+        fetchVendors();
+    }, []);
+
+    const handleUpdateVendor = async (updated: VendorData) => {
+        setVendors(vendors.map(v => v.id === updated.id ? updated : v));
+
+        // Sync to Supabase
+        const { error } = await supabase
+            .from('vendors')
+            .update(updated)
+            .eq('id', updated.id);
+
+        if (error) {
+            console.error('Error updating vendor:', error);
+            // Fallback to local storage
+            localStorage.setItem('roadside_vendors', JSON.stringify(vendors.map(v => v.id === updated.id ? updated : v)));
+        }
+    };
+
     // Profile View
     if (selectedVendorId) {
-        const vendor = VENDORS.find(v => v.id === selectedVendorId);
+        const vendor = vendors.find(v => v.id === selectedVendorId);
         if (vendor) {
             return (
                 <VendorProfile
@@ -35,13 +142,14 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
                     onBack={() => setSelectedVendorId(null)}
                     onEditEvent={onEditEvent}
                     onDeleteEvent={onDeleteEvent}
+                    onUpdateVendor={handleUpdateVendor}
                 />
             );
         }
     }
 
     // List View
-    const filteredVendors = VENDORS.filter(v =>
+    const filteredVendors = vendors.filter(v =>
         v.name.toLowerCase().includes(filter.toLowerCase()) ||
         v.location.toLowerCase().includes(filter.toLowerCase())
     );
@@ -102,9 +210,11 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
                                     {vendor.reliability > 90 ? <ShieldCheck size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-amber-500" />}
                                 </div>
                             </div>
-                            <div className="bg-slate-950 p-2 rounded border border-slate-800/50">
-                                <span className="text-[10px] text-slate-500 block mb-1">TOTAL JOBS</span>
-                                <span className="text-lg font-mono font-bold text-slate-300">{vendor.totalJobs}</span>
+                            <div className="bg-slate-950 p-2 rounded border border-slate-800/50 hover:bg-slate-900 transition-colors">
+                                <span className="text-[10px] text-slate-500 block mb-1">SERVICES</span>
+                                <span className="text-xs font-mono font-bold text-slate-300">
+                                    {vendor.services && vendor.services.length > 0 ? vendor.services.length : 0}
+                                </span>
                             </div>
                         </div>
 

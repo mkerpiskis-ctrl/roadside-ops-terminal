@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { ServiceLogView } from './components/views/ServiceLogView';
@@ -18,14 +18,67 @@ const MOCK_DATA: Event[] = Array.from({ length: 15 }).map((_, i) => ({
     satisfaction: (i % 5 === 0 ? 'bad' : 'good') as Event['satisfaction'],
 }));
 
+import { supabase } from './lib/supabase';
+
 function App() {
     const [currentView, setCurrentView] = useState<'dashboard' | 'service_log' | 'vendors' | 'analytics'>('dashboard');
     const [vendorFilter, setVendorFilter] = useState<string | null>(null);
     const [data, setData] = useState<Event[]>(MOCK_DATA);
-    const [notifications, setNotifications] = useState<Notification[]>([
-        { id: 'n1', title: 'System Online', message: 'Connection established with central dispatch.', timestamp: 'Just now', read: false, type: 'success' },
-        { id: 'n2', title: 'Pending Reviews', message: '3 cases require manager approval.', timestamp: '10m ago', read: false, type: 'warning' }
-    ]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [isConnected, setIsConnected] = useState(false);
+
+    // Fetch Events and Notifications from Supabase
+    useEffect(() => {
+        const fetchRemoteData = async () => {
+            // 1. Events
+            const { data: events, error: eventError } = await supabase
+                .from('events')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (!eventError && events && events.length > 0) {
+                setData(events);
+                setIsConnected(true);
+            } else {
+                console.log("Supabase unavailable or empty. Using Mock Data.");
+            }
+
+            // 2. Notifications
+            const { data: notifs } = await supabase
+                .from('notifications')
+                .select('*')
+                .order('timestamp', { ascending: false });
+
+            if (notifs) setNotifications(notifs);
+        };
+
+        fetchRemoteData();
+    }, []);
+
+    // Helper to sync events
+    const syncEvent = async (event: Event, action: 'insert' | 'update' | 'delete') => {
+        if (!isConnected) return; // Don't try if offline/mock
+
+        // Ensure consistent typing for DB
+        const dbEvent = { ...event };
+
+        if (action === 'insert') {
+            await supabase.from('events').insert([dbEvent]);
+        } else if (action === 'update') {
+            await supabase.from('events').update(dbEvent).eq('id', event.id);
+        } else if (action === 'delete') {
+            await supabase.from('events').delete().eq('id', event.id);
+        }
+    };
+
+    // Helper to sync notifications
+    const syncNotification = async (notif: Notification) => {
+        if (!isConnected) return;
+        await supabase.from('notifications').insert([notif]);
+    };
+
+    // Calculate active alerts (Review or Pending)
+    const alertCount = data.filter(e => e.status === 'review' || e.status === 'pending').length;
 
     const handleNavigate = (view: 'dashboard' | 'service_log' | 'vendors' | 'analytics') => {
         setCurrentView(view);
@@ -41,31 +94,40 @@ function App() {
             id: `n-${Date.now()}`,
             title,
             message,
-            timestamp: 'Just now',
+            timestamp: new Date().toISOString(),
             read: false,
             type
         };
         setNotifications(prev => [newNotif, ...prev]);
+        syncNotification(newNotif);
     };
 
-    const handleClearNotifications = () => {
+    const handleClearNotifications = async () => {
         setNotifications([]);
+        if (isConnected) {
+            await supabase.from('notifications').delete().neq('id', '0'); // Delete all
+        }
     };
 
     const handleLogEvent = (newEvent: Event) => {
-        setData([newEvent, ...data]);
+        const eventWithDate = { ...newEvent, created_at: new Date().toISOString() };
+        setData([eventWithDate, ...data]);
+        syncEvent(eventWithDate, 'insert');
         addNotification('New Event Logged', `Case ${newEvent.id} added by System.`, 'info');
     };
 
     const handleEditEvent = (updatedEvent: Event) => {
         setData(data.map(ev => ev.id === updatedEvent.id ? updatedEvent : ev));
+        syncEvent(updatedEvent, 'update');
         if (updatedEvent.status === 'resolved') {
             addNotification('Case Resolved', `Case ${updatedEvent.id} marked as resolved.`, 'success');
         }
     };
 
     const handleDeleteEvent = (id: string) => {
+        const eventToDelete = data.find(e => e.id === id);
         setData(data.filter(ev => ev.id !== id));
+        if (eventToDelete) syncEvent(eventToDelete, 'delete');
     };
 
     return (
@@ -76,6 +138,7 @@ function App() {
             activeVendorFilter={vendorFilter}
             notifications={notifications}
             onClearNotifications={handleClearNotifications}
+            alertCount={alertCount}
         >
             {currentView === 'dashboard' && (
                 <Dashboard

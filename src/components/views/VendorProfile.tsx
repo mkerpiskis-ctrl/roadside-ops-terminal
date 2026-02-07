@@ -1,28 +1,23 @@
-import { useMemo } from 'react';
-import { ArrowLeft, MapPin, ShieldCheck, AlertTriangle, TrendingUp, DollarSign, Activity } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { ArrowLeft, MapPin, ShieldCheck, AlertTriangle, TrendingUp, DollarSign, Activity, Phone, Briefcase, Pencil } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Event } from '../../types';
 import { DataGrid } from '../dashboard/DataGrid';
 import { cn } from '../../lib/utils';
+import { EditVendorModal, VendorData } from '../features/EditVendorModal';
 
 interface VendorProfileProps {
-    vendor: {
-        id: string;
-        name: string;
-        location: string;
-        rating: number;
-        status: string;
-        reliability: number;
-        joined: string;
-    };
+    vendor: VendorData;
     events: Event[];
     onBack: () => void;
     onEditEvent: (event: Event) => void;
     onDeleteEvent: (id: string) => void;
+    onUpdateVendor: (updatedVendor: VendorData) => void;
 }
 
-export function VendorProfile({ vendor, events, onBack, onEditEvent, onDeleteEvent }: VendorProfileProps) {
-    // ... existing code ...
+export function VendorProfile({ vendor, events, onBack, onEditEvent, onDeleteEvent, onUpdateVendor }: VendorProfileProps) {
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
     // Filter events for this vendor
     const vendorEvents = useMemo(() => {
         return events.filter(e => e.vendor === vendor.name);
@@ -35,7 +30,6 @@ export function VendorProfile({ vendor, events, onBack, onEditEvent, onDeleteEve
         const totalJobs = vendorEvents.length;
 
         // Mocking monthly spend for the chart based on available events
-        // In a real app, this would group by actual dates
         const spendTrend = vendorEvents.map((e, i) => ({
             name: `Job ${i + 1}`,
             value: e.price
@@ -45,39 +39,93 @@ export function VendorProfile({ vendor, events, onBack, onEditEvent, onDeleteEve
     }, [vendorEvents]);
 
     return (
-        <div className="h-full flex flex-col">
+        <div className="h-full flex flex-col relative">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-6 pb-4 border-b border-slate-900">
-                <button
-                    onClick={onBack}
-                    className="p-2 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors"
-                >
-                    <ArrowLeft size={18} />
-                </button>
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-100 tracking-wide flex items-center gap-3">
-                        {vendor.name}
-                        <span className={cn(
-                            "text-xs px-2 py-0.5 rounded font-mono uppercase border",
-                            vendor.status === 'ok' ? "bg-emerald-950/30 text-emerald-400 border-emerald-900" :
-                                vendor.status === 'warn' ? "bg-amber-950/30 text-amber-400 border-amber-900" :
-                                    "bg-rose-950/30 text-rose-400 border-rose-900"
-                        )}>
-                            {vendor.status === 'crit' ? 'CRITICAL' : vendor.status === 'warn' ? 'WARNING' : 'ACTIVE'}
-                        </span>
-                    </h2>
-                    <div className="flex items-center gap-4 text-xs text-slate-500 font-mono mt-1">
-                        <span className="flex items-center gap-1"><MapPin size={10} /> {vendor.location}</span>
-                        <span>|</span>
-                        <span>ID: {vendor.id}</span>
-                        <span>|</span>
-                        <span>JOINED: {vendor.joined}</span>
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-900">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={onBack}
+                        className="p-2 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors"
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-100 tracking-wide flex items-center gap-3">
+                            {vendor.name}
+                            <span className={cn(
+                                "text-xs px-2 py-0.5 rounded font-mono uppercase border",
+                                vendor.status === 'ok' ? "bg-emerald-950/30 text-emerald-400 border-emerald-900" :
+                                    vendor.status === 'warn' ? "bg-amber-950/30 text-amber-400 border-amber-900" :
+                                        "bg-rose-950/30 text-rose-400 border-rose-900"
+                            )}>
+                                {vendor.status === 'crit' ? 'CRITICAL' : vendor.status === 'warn' ? 'WARNING' : 'ACTIVE'}
+                            </span>
+                        </h2>
+                        <div className="flex items-center gap-4 text-xs text-slate-500 font-mono mt-1">
+                            <span className="flex items-center gap-1"><MapPin size={10} /> {vendor.location}</span>
+                            <span>|</span>
+                            <span>ID: {vendor.id}</span>
+                            <span>|</span>
+                            <span>JOINED: {vendor.joined}</span>
+                        </div>
                     </div>
                 </div>
+                <button
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="flex items-center gap-2 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded border border-slate-800 transition-colors text-xs font-bold uppercase tracking-wider"
+                >
+                    <Pencil size={12} />
+                    Edit Profile
+                </button>
             </div>
 
             {/* Content Grid */}
             <div className="flex-1 overflow-y-auto pr-2">
+
+                {/* Contact & Services Info Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="bg-slate-950 border border-slate-900 p-4 rounded relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-2 opacity-10">
+                            <MapPin size={100} />
+                        </div>
+                        <h3 className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                            <MapPin size={12} /> Contact Details
+                        </h3>
+                        <div className="space-y-3 relative z-10">
+                            <div>
+                                <span className="text-[10px] text-slate-600 uppercase block mb-0.5">Full Address</span>
+                                <p className="text-sm text-slate-300 font-mono">{vendor.address || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <span className="text-[10px] text-slate-600 uppercase block mb-0.5">Phone Number</span>
+                                <p className="text-sm text-slate-300 font-mono flex items-center gap-2">
+                                    <Phone size={12} className="text-blue-500" />
+                                    {vendor.phone || 'N/A'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-950 border border-slate-900 p-4 rounded relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-2 opacity-10">
+                            <Briefcase size={100} />
+                        </div>
+                        <h3 className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                            <Briefcase size={12} /> Services Provided
+                        </h3>
+                        <div className="flex flex-wrap gap-2 relative z-10">
+                            {vendor.services && vendor.services.length > 0 ? (
+                                vendor.services.map(service => (
+                                    <span key={service} className="px-2 py-1 bg-slate-900 border border-slate-800 rounded text-xs text-slate-300 font-mono">
+                                        {service}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className="text-xs text-slate-600 italic">No services listed yet.</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
 
                 {/* Stats Row */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -176,6 +224,16 @@ export function VendorProfile({ vendor, events, onBack, onEditEvent, onDeleteEve
                     />
                 </div>
             </div>
+
+            <EditVendorModal
+                vendor={vendor}
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                onSave={(updatedVendor) => {
+                    onUpdateVendor(updatedVendor);
+                    setIsEditModalOpen(false);
+                }}
+            />
         </div>
     );
 }

@@ -11,6 +11,7 @@ interface LayoutProps {
     activeVendorFilter: string | null;
     notifications: Notification[];
     onClearNotifications: () => void;
+    alertCount: number;
 }
 
 export function Layout({
@@ -20,7 +21,8 @@ export function Layout({
     onFilterVendor,
     activeVendorFilter,
     notifications,
-    onClearNotifications
+    onClearNotifications,
+    alertCount
 }: LayoutProps) {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-blue-500/30">
@@ -30,6 +32,7 @@ export function Layout({
                 onNavigate={onNavigate}
                 onFilterVendor={onFilterVendor}
                 activeVendorFilter={activeVendorFilter}
+                alertCount={alertCount}
             />
             <Header />
 

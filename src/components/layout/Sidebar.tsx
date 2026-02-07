@@ -1,6 +1,7 @@
 import React from 'react';
 import { LayoutDashboard, ClipboardList, Users, BarChart3, Radio, ShieldAlert } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { APP_VERSION } from '../../lib/constants';
 
 export type ViewType = 'dashboard' | 'service_log' | 'vendors' | 'analytics';
 
@@ -43,7 +44,7 @@ const SidebarItem = ({ icon: Icon, label, active, alertCount, onClick }: Sidebar
     );
 };
 
-export function Sidebar({ currentView, onNavigate, onFilterVendor, activeVendorFilter }: SidebarProps) {
+export function Sidebar({ currentView, onNavigate, onFilterVendor, activeVendorFilter, alertCount }: SidebarProps & { alertCount: number }) {
     return (
         <aside className="w-64 bg-slate-950 border-r border-slate-900 h-screen fixed left-0 top-0 flex flex-col z-50">
             {/* Brand / Logo Area */}
@@ -53,7 +54,7 @@ export function Sidebar({ currentView, onNavigate, onFilterVendor, activeVendorF
                 </div>
                 <div>
                     <h1 className="text-slate-100 font-bold text-sm tracking-wider">ROADSIDE<span className="text-blue-500">OPS</span></h1>
-                    <p className="text-[10px] text-slate-500 font-mono tracking-tighter">TERMINAL v5.0</p>
+                    <p className="text-[10px] text-slate-500 font-mono tracking-tighter">TERMINAL {APP_VERSION}</p>
                 </div>
             </div>
 
@@ -70,7 +71,7 @@ export function Sidebar({ currentView, onNavigate, onFilterVendor, activeVendorF
                     <SidebarItem
                         icon={ClipboardList}
                         label="Service Log"
-                        alertCount={3}
+                        alertCount={alertCount}
                         active={currentView === 'service_log'}
                         onClick={() => onNavigate('service_log')}
                     />
