@@ -8,6 +8,7 @@ export interface Event {
     type: string;
     price: number;
     satisfaction: 'good' | 'bad' | 'neutral';
+    job_status?: string; // e.g. 'On Call', 'Completed', 'Cancelled'
     notes?: string;
     reviewNotes?: string;
 }

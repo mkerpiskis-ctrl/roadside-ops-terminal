@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertTriangle, DollarSign, MapPin, Truck, PenTool } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, CheckCircle, AlertTriangle, DollarSign, MapPin, Truck, PenTool, Search } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Event } from '../../types';
+import { supabase } from '../../lib/supabase';
 
 interface LogEventModalProps {
     isOpen: boolean;
@@ -31,25 +32,47 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         price: '',
         satisfaction: 'good',
         flags: [] as string[],
-        outcome: 'Completed',
+        job_status: 'Completed',
         reviewNotes: ''
     });
+
+    const [vendors, setVendors] = useState<any[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        // Fetch vendors for autocomplete
+        const fetchVendors = async () => {
+            const { data } = await supabase.from('vendors').select('name, location');
+            if (data) setVendors(data);
+        };
+        fetchVendors();
+
+        // Click outside to close suggestions
+        function handleClickOutside(event: MouseEvent) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setShowSuggestions(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     useEffect(() => {
         if (initialData) {
             setFormData({
-                category: 'Roadside',
+                category: initialData.type.includes('Tow') ? 'Roadside' : 'Roadside', // Default or map if needed
                 type: initialData.type,
                 location: initialData.location,
                 vendor: initialData.vendor,
                 price: initialData.price.toString(),
                 satisfaction: initialData.satisfaction,
                 flags: [],
-                outcome: initialData.status === 'resolved' ? 'Completed' : 'Completed', // Simplified for now
+                job_status: initialData.job_status || 'Completed',
                 reviewNotes: initialData.reviewNotes || ''
             });
         } else {
-            // Reset form for new entry
+            // Reset form
             setFormData({
                 category: 'Roadside',
                 type: 'Roadside Service',
@@ -58,7 +81,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 price: '',
                 satisfaction: 'good',
                 flags: [],
-                outcome: 'Completed',
+                job_status: 'On Call', // Default for new? Or Completed? User asked for On Call option.
                 reviewNotes: ''
             });
         }
@@ -73,10 +96,17 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         }));
     };
 
+    const handleVendorSelect = (name: string, location?: string) => {
+        setFormData(prev => ({
+            ...prev,
+            vendor: name,
+            location: (location && !prev.location) ? location : prev.location
+        }));
+        setShowSuggestions(false);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // If it was in review and we are just saving, keep it in review unless explicit action taken
-        // But for generic submit, we pass the data up
         onSubmit({
             ...formData,
             status: initialData?.status === 'review' ? 'review' : 'resolved'
@@ -140,14 +170,14 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                     {/* Category Selection */}
                     <div className="space-y-2">
                         <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Category</label>
-                        <div className="grid grid-cols-3 gap-3">
-                            {['Tow', 'Roadside', 'Shop'].map(cat => (
+                        <div className="flex gap-3">
+                            {['Roadside', 'Shop'].map(cat => (
                                 <button
                                     key={cat}
                                     type="button"
                                     onClick={() => setFormData({ ...formData, category: cat })}
                                     className={cn(
-                                        "py-2 px-3 rounded-sm border text-sm font-medium transition-all font-mono",
+                                        "flex-1 py-2 px-3 rounded-sm border text-sm font-medium transition-all font-mono",
                                         formData.category === cat
                                             ? "bg-slate-100 text-slate-950 border-white"
                                             : "bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-600"
@@ -175,16 +205,41 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                             </div>
                         </div>
 
-                        {/* Vendor */}
-                        <div className="space-y-2">
+                        {/* Vendor with Autocomplete */}
+                        <div className="space-y-2 relative" ref={wrapperRef}>
                             <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Vendor</label>
-                            <input
-                                type="text"
-                                className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-sm py-2 px-3 focus:border-blue-500 outline-none font-mono placeholder:text-slate-700"
-                                placeholder="Find Vendor..."
-                                value={formData.vendor}
-                                onChange={e => setFormData({ ...formData, vendor: e.target.value })}
-                            />
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-sm py-2 px-3 focus:border-blue-500 outline-none font-mono placeholder:text-slate-700"
+                                    placeholder="Find Vendor..."
+                                    value={formData.vendor}
+                                    onChange={e => {
+                                        setFormData({ ...formData, vendor: e.target.value });
+                                        setShowSuggestions(true);
+                                    }}
+                                    onFocus={() => setShowSuggestions(true)}
+                                />
+                                {showSuggestions && formData.vendor.length > 0 && (
+                                    <div className="absolute z-10 w-full bg-slate-900 border border-slate-700 mt-1 rounded-sm shadow-xl max-h-48 overflow-y-auto">
+                                        {vendors
+                                            .filter(v => v.name.toLowerCase().includes(formData.vendor.toLowerCase()))
+                                            .map(v => (
+                                                <div
+                                                    key={v.id}
+                                                    onClick={() => handleVendorSelect(v.name, v.location)}
+                                                    className="px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 cursor-pointer border-b border-slate-800/50 last:border-0"
+                                                >
+                                                    <div className="font-bold">{v.name}</div>
+                                                    <div className="text-[10px] text-slate-500">{v.location}</div>
+                                                </div>
+                                            ))}
+                                        {vendors.filter(v => v.name.toLowerCase().includes(formData.vendor.toLowerCase())).length === 0 && (
+                                            <div className="px-3 py-2 text-xs text-slate-500 italic">No matches found</div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Location */}
@@ -243,16 +298,17 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                                 </button>
                             ))}
                         </div>
-                        {/* Outcome */}
+                        {/* Service Status (Renamed from Outcome) */}
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Outcome</label>
+                            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Service Status</label>
                             <div className="relative">
                                 <CheckCircle className="absolute left-3 top-2.5 text-slate-600" size={14} />
                                 <select
                                     className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-sm py-2 pl-9 pr-3 focus:border-blue-500 outline-none appearance-none font-mono"
-                                    value={formData.outcome}
-                                    onChange={e => setFormData({ ...formData, outcome: e.target.value })}
+                                    value={formData.job_status}
+                                    onChange={e => setFormData({ ...formData, job_status: e.target.value })}
                                 >
+                                    <option>On Call</option>
                                     <option>Completed</option>
                                     <option>Completed with Issues</option>
                                     <option>Cancelled</option>

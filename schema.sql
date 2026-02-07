@@ -9,6 +9,7 @@ create table events (
   type text,
   price numeric,
   satisfaction text, -- Loosened for 'neutral'
+  job_status text, -- New field for 'On Call', 'Completed', etc.
   notes text,
   review_notes text 
 );

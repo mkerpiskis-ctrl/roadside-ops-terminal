@@ -89,6 +89,7 @@ function App() {
             type: event.type,
             price: event.price,
             satisfaction: event.satisfaction,
+            job_status: event.job_status,
             notes: event.notes,
             review_notes: event.reviewNotes,
             created_at: event.created_at || event.timestamp
