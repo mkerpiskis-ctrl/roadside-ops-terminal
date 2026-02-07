@@ -34,6 +34,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         flags: [] as string[],
         job_status: 'Completed',
         rating: 0,
+        notes: '',
         reviewNotes: ''
     });
 
@@ -71,6 +72,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 flags: [],
                 job_status: initialData.job_status || 'Completed',
                 rating: initialData.rating || 0,
+                notes: initialData.notes || '',
                 reviewNotes: initialData.reviewNotes || ''
             });
         } else {
@@ -85,6 +87,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 flags: [],
                 job_status: 'On Call', // Default for new? Or Completed? User asked for On Call option.
                 rating: 0,
+                notes: '',
                 reviewNotes: ''
             });
         }
