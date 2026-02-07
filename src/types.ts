@@ -13,9 +13,9 @@ export interface Event {
     notes?: string;
     reviewNotes?: string;
     // Financials
-    total_estimate?: number;
-    hourly_rate?: number;
-    callout_fee?: number;
+    total_estimate?: number | null;
+    hourly_rate?: number | null;
+    callout_fee?: number | null;
     cost_context?: string[]; // e.g. ['Overtime', 'Weekend', 'Heavy Duty']
 }
 
