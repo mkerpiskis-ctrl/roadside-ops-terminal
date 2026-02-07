@@ -162,7 +162,8 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
     };
 
     const handleCreateVendor = async (newVendor: VendorData) => {
-        setVendors([...vendors, newVendor]);
+        // Optimistic Update
+        setVendors(prev => [...prev, newVendor]);
         setIsCreateModalOpen(false);
 
         const { error } = await supabase
@@ -171,6 +172,8 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
 
         if (error) {
             console.error('Error creating vendor:', error);
+            // Revert optimistic update on error
+            setVendors(prev => prev.filter(v => v.id !== newVendor.id));
         }
     };
 

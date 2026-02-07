@@ -21,7 +21,11 @@ const MOCK_DATA: Event[] = Array.from({ length: 15 }).map((_, i) => ({
 import { supabase } from './lib/supabase';
 
 function App() {
-    const [currentView, setCurrentView] = useState<'dashboard' | 'service_log' | 'vendors' | 'analytics'>('dashboard');
+    // State
+    const [currentView, setCurrentView] = useState<'dashboard' | 'service_log' | 'vendors' | 'analytics'>(() => {
+        const savedView = localStorage.getItem('roadside_current_view');
+        return (savedView as any) || 'dashboard';
+    });
     const [data, setData] = useState<Event[]>([]); // Start empty
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'online' | 'offline' | 'error'>('connecting');
@@ -118,6 +122,7 @@ function App() {
 
     const handleNavigate = (view: 'dashboard' | 'service_log' | 'vendors' | 'analytics') => {
         setCurrentView(view);
+        localStorage.setItem('roadside_current_view', view);
     };
 
     const addNotification = (title: string, message: string, type: Notification['type'] = 'info') => {

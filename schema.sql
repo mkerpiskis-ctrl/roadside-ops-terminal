@@ -21,7 +21,7 @@ create table vendors (
   rating numeric,
   status text check (status in ('ok', 'warn', 'crit')),
   reliability int,
-  joined_date text,
+  joined text, -- Changed from joined_date to match code
   address text,
   phone text,
   services text[]
