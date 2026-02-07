@@ -79,11 +79,59 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
 
     // Calculate Dynamic Stats
     const stats = useMemo(() => {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
+        // MTD Spend
+        const mtdData = filteredData.filter(item => new Date(item.timestamp) >= startOfMonth);
+        const mtdSpend = mtdData.reduce((acc, item) => acc + item.price, 0);
+
+        // Prev Month Spend (for trend)
+        const prevMonthData = filteredData.filter(item => {
+            const date = new Date(item.timestamp);
+            return date >= startOfPrevMonth && date <= endOfPrevMonth;
+        });
+        const prevMonthSpend = prevMonthData.reduce((acc, item) => acc + item.price, 0);
+
+        // Calculate Spend Trend
+        let spendTrendValue = 0;
+        if (prevMonthSpend > 0) {
+            spendTrendValue = ((mtdSpend - prevMonthSpend) / prevMonthSpend) * 100;
+        } else if (mtdSpend > 0) {
+            spendTrendValue = 100; // 100% increase if prev was 0
+        }
+
+        // 24h Events
+        const events24h = filteredData.filter(item => new Date(item.timestamp) >= twentyFourHoursAgo).length;
+        const eventsPrev24h = filteredData.filter(item => {
+            const date = new Date(item.timestamp);
+            return date >= fortyEightHoursAgo && date < twentyFourHoursAgo;
+        }).length;
+
+        const eventsTrendValue = events24h - eventsPrev24h; // Absolute difference for small numbers
+
+        // Avg Cost (All Time)
         const totalSpend = filteredData.reduce((acc, item) => acc + item.price, 0);
         const avgCost = filteredData.length > 0 ? totalSpend / filteredData.length : 0;
+
+        // Active Alerts
         const activeAlerts = filteredData.filter(item => item.status === 'review' || item.status === 'pending').length;
 
-        return { totalSpend, avgCost, count: filteredData.length, activeAlerts };
+        return {
+            totalSpend: mtdSpend,
+            avgCost,
+            count: events24h,
+            activeAlerts,
+            trends: {
+                spend: spendTrendValue,
+                events: eventsTrendValue
+            }
+        };
     }, [filteredData]);
 
     // Urgent Alerts Only
@@ -115,17 +163,23 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
                 <StatCard
                     label="Total Spend (MTD)"
                     value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(stats.totalSpend)}
-                    trend={{ value: "+12.5%", isPositive: false }}
+                    trend={{
+                        value: `${stats.trends.spend > 0 ? '+' : ''}${stats.trends.spend.toFixed(1)}%`,
+                        isPositive: stats.trends.spend <= 0
+                    }}
                 />
                 <StatCard
                     label="Events (24h)"
                     value={stats.count.toString()}
-                    trend={{ value: "+3", isPositive: true }}
+                    trend={{
+                        value: `${stats.trends.events > 0 ? '+' : ''}${stats.trends.events}`,
+                        isPositive: stats.trends.events <= 0 // Fewer events is usually better? Or more? Context dependent. Let's say fewer is better for "incidents".
+                    }}
                 />
                 <StatCard
                     label="Avg Cost"
                     value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(stats.avgCost)}
-                    trend={{ value: "-2.1%", isPositive: true }}
+                    trend={{ value: "0.0%", isPositive: true }}
                 />
                 <StatCard
                     label="Active Alerts"
