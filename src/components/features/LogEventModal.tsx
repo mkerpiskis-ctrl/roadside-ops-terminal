@@ -27,6 +27,7 @@ interface LogEventFormData {
     type: string;
     location: string;
     vendor: string;
+    ref_number: string;
     price: string;
     satisfaction: 'good' | 'bad' | 'neutral';
     job_status: string;
@@ -48,6 +49,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         type: 'Roadside Service',
         location: '',
         vendor: '',
+        ref_number: '',
         price: '',
         satisfaction: 'neutral',
         job_status: 'On Call',
@@ -91,6 +93,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 type: initialData.type,
                 location: initialData.location,
                 vendor: initialData.vendor,
+                ref_number: initialData.ref_number || '',
                 price: initialData.price.toString(),
                 satisfaction: initialData.satisfaction,
                 job_status: initialData.job_status || 'Completed',
@@ -110,6 +113,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 type: 'Roadside Service',
                 location: '',
                 vendor: '',
+                ref_number: '',
                 price: '',
                 satisfaction: 'neutral',
                 job_status: 'On Call', // Default for new? Or Completed? User asked for On Call option.
@@ -321,6 +325,21 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                                     onBlur={() => setTouched(prev => ({ ...prev, location: true }))}
                                 />
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Reference Number */}
+                    <div className="space-y-2 pb-4">
+                        <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Ref #</label>
+                        <div className="relative">
+                            <PenTool className="absolute left-3 top-2.5 text-slate-600" size={14} />
+                            <input
+                                type="text"
+                                className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-sm py-2 pl-9 pr-3 outline-none font-mono placeholder:text-slate-700"
+                                placeholder="REF-000"
+                                value={formData.ref_number}
+                                onChange={e => setFormData({ ...formData, ref_number: e.target.value })}
+                            />
                         </div>
                     </div>
 

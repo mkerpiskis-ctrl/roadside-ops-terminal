@@ -17,6 +17,8 @@ export interface Event {
     hourly_rate?: number | null;
     callout_fee?: number | null;
     cost_context?: string[]; // e.g. ['Overtime', 'Weekend', 'Heavy Duty']
+    ref_number?: string;
+    friendly_id?: string;
 }
 
 export interface Notification {

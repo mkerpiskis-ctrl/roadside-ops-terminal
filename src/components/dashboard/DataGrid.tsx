@@ -28,8 +28,10 @@ export function DataGrid({ data, onEdit, onDelete }: DataGridProps) {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-950 border-b border-slate-800 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                            <th className="py-2 px-3 border-r border-slate-900 w-24">Event ID</th>
                             <th className="py-2 px-3 border-r border-slate-900 w-32">Timestamp</th>
                             <th className="py-2 px-3 border-r border-slate-900 w-32">Status</th>
+                            <th className="py-2 px-3 border-r border-slate-900 w-24">Ref #</th>
                             <th className="py-2 px-3 border-r border-slate-900">Vendor</th>
                             <th className="py-2 px-3 border-r border-slate-900">Location</th>
                             <th className="py-2 px-3 border-r border-slate-900">Service Type</th>
@@ -49,11 +51,17 @@ export function DataGrid({ data, onEdit, onDelete }: DataGridProps) {
                                     row.satisfaction === 'bad' ? "bg-rose-950/10 hover:bg-rose-950/20" : "hover:bg-slate-800/50"
                                 )}
                             >
+                                <td className="py-2.5 px-3 border-r border-slate-800 whitespace-nowrap font-mono text-slate-500 text-[10px]">
+                                    {row.friendly_id || row.id}
+                                </td>
                                 <td className="py-2.5 px-3 border-r border-slate-800 whitespace-nowrap text-slate-500">
                                     {row.timestamp}
                                 </td>
                                 <td className="py-2.5 px-3 border-r border-slate-800 whitespace-nowrap">
                                     <StatusBadge status={row.status} />
+                                </td>
+                                <td className="py-2.5 px-3 border-r border-slate-800 whitespace-nowrap font-mono text-blue-300">
+                                    {row.ref_number || '-'}
                                 </td>
                                 <td className="py-2.5 px-3 border-r border-slate-800 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] font-sans text-slate-200">
                                     {row.vendor}

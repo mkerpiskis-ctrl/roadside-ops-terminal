@@ -78,30 +78,46 @@ export function ServiceLogView({ data, onLogEvent, onEditEvent, onDeleteEvent }:
                             status: formData.status || editingEvent.status,
                             vendor: formData.vendor || 'Unknown Vendor',
                             location: formData.location || 'Unknown Loc',
+                            ref_number: formData.ref_number,
                             type: formData.type,
                             price: Number(formData.price) || 0,
                             satisfaction: formData.satisfaction,
                             job_status: formData.job_status,
                             rating: formData.rating,
-                            reviewNotes: formData.reviewNotes
+                            notes: formData.notes,
+                            reviewNotes: formData.reviewNotes,
+                            // Financials
+                            total_estimate: formData.total_estimate ? Number(formData.total_estimate) : null,
+                            hourly_rate: formData.hourly_rate ? Number(formData.hourly_rate) : null,
+                            callout_fee: formData.callout_fee ? Number(formData.callout_fee) : null,
+                            cost_context: formData.cost_context,
                         };
                         onEditEvent(updatedEvent);
                     } else {
                         const newEvent: Event = {
                             id: `EV-${Math.floor(Math.random() * 10000)}`,
                             timestamp: timestamp,
-                            status: formData.status || 'review', // Use formData.status if provided, otherwise default to 'review'
+                            status: formData.status || 'review',
                             vendor: formData.vendor || 'Unknown Vendor',
                             location: formData.location || 'Unknown Loc',
+                            ref_number: formData.ref_number,
                             type: formData.type,
                             price: Number(formData.price) || 0,
                             satisfaction: formData.satisfaction,
                             job_status: formData.job_status,
                             rating: formData.rating,
-                            reviewNotes: formData.reviewNotes
+                            notes: formData.notes,
+                            reviewNotes: formData.reviewNotes,
+                            created_at: new Date().toISOString(),
+                            // Financials
+                            total_estimate: formData.total_estimate ? Number(formData.total_estimate) : null,
+                            hourly_rate: formData.hourly_rate ? Number(formData.hourly_rate) : null,
+                            callout_fee: formData.callout_fee ? Number(formData.callout_fee) : null,
+                            cost_context: formData.cost_context,
                         };
                         onLogEvent(newEvent);
                     }
+                    setIsModalOpen(false);
                 }}
             />
         </div>
