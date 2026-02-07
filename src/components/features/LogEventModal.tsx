@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, CheckCircle, AlertTriangle, DollarSign, MapPin, Truck, PenTool, Search } from 'lucide-react';
+import { X, CheckCircle, AlertTriangle, DollarSign, MapPin, Truck, PenTool } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Event } from '../../types';
 import { supabase } from '../../lib/supabase';
@@ -107,9 +107,16 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Derive App Status from Job Status
+        let newStatus: Event['status'] = 'resolved';
+        if (formData.job_status === 'Cancelled') newStatus = 'void';
+        else if (formData.job_status === 'On Call') newStatus = 'pending';
+        else if (initialData?.status === 'review') newStatus = 'review'; // Keep review if already reviewing
+
         onSubmit({
             ...formData,
-            status: initialData?.status === 'review' ? 'review' : 'resolved'
+            status: newStatus
         });
         onClose();
     };
