@@ -551,16 +551,24 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                                         >
                                             UPDATE DETAILS
                                         </button>
-                                        <button
-                                            onClick={() => {
-                                                setFormData(prev => ({ ...prev, job_status: 'Completed' }));
-                                                handleTransition('resolved');
-                                            }}
-                                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold rounded-sm shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all flex items-center gap-2"
-                                        >
-                                            <CheckCircle size={14} />
-                                            COMPLETE JOB
-                                        </button>
+
+                                        {formData.job_status !== 'Completed' ? (
+                                            <button
+                                                onClick={() => setFormData(prev => ({ ...prev, job_status: 'Completed' }))}
+                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-mono font-bold rounded-sm transition-all flex items-center gap-2"
+                                            >
+                                                <CheckCircle size={14} />
+                                                MARK COMPLETED
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleTransition('resolved')}
+                                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold rounded-sm shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all flex items-center gap-2"
+                                            >
+                                                <CheckCircle size={14} />
+                                                RESOLVE JOB
+                                            </button>
+                                        )}
                                     </>
                                 ) : (
                                     <button
