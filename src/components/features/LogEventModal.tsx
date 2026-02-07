@@ -44,9 +44,9 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         location: '',
         vendor: '',
         price: '',
-        satisfaction: 'good',
+        satisfaction: 'neutral',
         flags: [],
-        job_status: 'Completed',
+        job_status: 'On Call',
         rating: 0,
         notes: '',
         reviewNotes: ''
@@ -54,6 +54,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
 
     const [vendors, setVendors] = useState<any[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [touched, setTouched] = useState<Record<string, boolean>>({}); // Track touched fields for validation
     const wrapperRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -97,13 +98,14 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 location: '',
                 vendor: '',
                 price: '',
-                satisfaction: 'good',
+                satisfaction: 'neutral',
                 flags: [],
                 job_status: 'On Call', // Default for new? Or Completed? User asked for On Call option.
                 rating: 0,
                 notes: '',
                 reviewNotes: ''
             });
+            setTouched({});
         }
     }, [initialData, isOpen]);
 
@@ -116,17 +118,23 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         }));
     };
 
-    const handleVendorSelect = (name: string, location?: string) => {
+    const handleVendorSelect = (name: string) => {
         setFormData(prev => ({
             ...prev,
             vendor: name,
-            location: (location && !prev.location) ? location : prev.location
+            // User requested explicit manual location entry, do not auto-fill.
         }));
         setShowSuggestions(false);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validation
+        if (!formData.location.trim()) {
+            setTouched(prev => ({ ...prev, location: true }));
+            return;
+        }
 
         // Derive App Status from Job Status
         let newStatus: Event['status'] = 'resolved';
@@ -142,6 +150,12 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
     };
 
     const handleTransition = (newStatus: 'pending' | 'resolved') => {
+        // Validation check even for transitions if editing
+        if (!formData.location.trim()) {
+            setTouched(prev => ({ ...prev, location: true }));
+            return;
+        }
+
         onSubmit({
             ...formData,
             status: newStatus
@@ -254,7 +268,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                                             .map(v => (
                                                 <div
                                                     key={v.id}
-                                                    onClick={() => handleVendorSelect(v.name, v.location)}
+                                                    onClick={() => handleVendorSelect(v.name)}
                                                     className="px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 cursor-pointer border-b border-slate-800/50 last:border-0"
                                                 >
                                                     <div className="font-bold">{v.name}</div>
@@ -269,17 +283,24 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                             </div>
                         </div>
 
-                        {/* Location */}
+                        {/* Location - MANDATORY */}
                         <div className="space-y-2">
-                            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Location</label>
+                            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider flex justify-between">
+                                Location
+                                <span className={cn("text-rose-500 text-[9px] tracking-normal ml-2", touched.location && !formData.location ? 'opacity-100' : 'opacity-0')}>REQUIRED</span>
+                            </label>
                             <div className="relative">
-                                <MapPin className="absolute left-3 top-2.5 text-slate-600" size={14} />
+                                <MapPin className={cn("absolute left-3 top-2.5", touched.location && !formData.location ? "text-rose-500" : "text-slate-600")} size={14} />
                                 <input
                                     type="text"
-                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-sm py-2 pl-9 pr-3 focus:border-blue-500 outline-none font-mono"
+                                    className={cn(
+                                        "w-full bg-slate-900 border text-slate-200 text-sm rounded-sm py-2 pl-9 pr-3 outline-none font-mono",
+                                        touched.location && !formData.location ? "border-rose-500 placeholder:text-rose-500/50" : "border-slate-800 focus:border-blue-500"
+                                    )}
                                     placeholder="City, State"
                                     value={formData.location}
                                     onChange={e => setFormData({ ...formData, location: e.target.value })}
+                                    onBlur={() => setTouched(prev => ({ ...prev, location: true }))}
                                 />
                             </div>
                         </div>
@@ -325,6 +346,20 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                             </div>
                         </div>
                     </div>
+
+                    {/* Conditional Comments Field */}
+                    {formData.rating > 0 && (
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <label className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">Additional Feedback / Comments</label>
+                            <textarea
+                                className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-sm py-2 px-3 focus:border-amber-500 outline-none font-mono min-h-[80px] placeholder:text-slate-700"
+                                placeholder="Please share details about your experience..."
+                                value={formData.notes || ''}
+                                onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                autoFocus
+                            />
+                        </div>
+                    )}
 
                     <div className="h-px bg-slate-800" />
 
