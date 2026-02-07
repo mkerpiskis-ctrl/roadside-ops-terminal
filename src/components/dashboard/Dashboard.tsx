@@ -142,8 +142,8 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
                 <div className="bg-slate-950 border border-slate-900 rounded-lg overflow-hidden">
                     <div className="p-4 border-b border-slate-900 flex justify-between items-center bg-slate-900/30">
                         <div className="flex items-center gap-2">
-                            <ShieldAlert className="text-rose-500" size={18} />
-                            <h3 className="text-sm font-bold text-slate-200">RECENT CRITICAL ALERTS</h3>
+                            <ShieldAlert className="text-blue-500" size={18} />
+                            <h3 className="text-sm font-bold text-slate-200">ACTIVE OPERATIONS</h3>
                         </div>
                         <button
                             onClick={() => onNavigate('service_log')}
