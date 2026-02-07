@@ -31,40 +31,46 @@ function App() {
     // Fetch Events and Notifications from Supabase
     useEffect(() => {
         const fetchRemoteData = async () => {
-            // 1. Events
-            const { data: events, error: eventError } = await supabase
-                .from('events')
-                .select('*')
-                .order('created_at', { ascending: false });
+            console.log("Supabase URL present:", !!import.meta.env.VITE_SUPABASE_URL);
 
-            if (!eventError) {
-                setConnectionStatus('online');
-                // Only seed mock data if the cloud DB is COMPLETELY empty
-                if (events && events.length > 0) {
-                    setData(events);
-                } else if (!localStorage.getItem('roadside_db_seeded')) {
-                    console.log("Supabase empty. Seeding initial data...");
-                    // For now, we'll just start with an empty list if they deleted everything
-                    setData([]);
-                    localStorage.setItem('roadside_db_seeded', 'true');
+            // 1. Events
+            try {
+                const { data: events, error: eventError } = await supabase
+                    .from('events')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (!eventError) {
+                    console.log("Supabase connection established successfully.");
+                    setConnectionStatus('online');
+                    if (events && events.length > 0) {
+                        setData(events);
+                    } else {
+                        setData([]);
+                    }
                 } else {
-                    setData([]); // DB is legitimately empty
+                    setConnectionStatus('error');
+                    console.error("Supabase Error Details:", eventError);
+                    const saved = localStorage.getItem('roadside_events');
+                    setData(saved ? JSON.parse(saved) : MOCK_DATA);
                 }
-            } else {
+            } catch (err) {
+                console.error("Critical Connection Error:", err);
                 setConnectionStatus('error');
-                console.error("Supabase connection error or table missing:", eventError.message);
-                // Fallback to local storage or mock
-                const saved = localStorage.getItem('roadside_events');
-                setData(saved ? JSON.parse(saved) : MOCK_DATA);
+                setData(MOCK_DATA);
             }
 
             // 2. Notifications
-            const { data: notifs } = await supabase
-                .from('notifications')
-                .select('*')
-                .order('timestamp', { ascending: false });
+            try {
+                const { data: notifs } = await supabase
+                    .from('notifications')
+                    .select('*')
+                    .order('timestamp', { ascending: false });
 
-            if (notifs) setNotifications(notifs);
+                if (notifs) setNotifications(notifs);
+            } catch (err) {
+                console.error("Notifications fetch error:", err);
+            }
         };
 
         fetchRemoteData();
@@ -98,7 +104,7 @@ function App() {
         }
 
         if (res?.error) {
-            console.error(`Supabase Sync Error (${action}):`, res.error.message, res.error.details);
+            console.error(`Supabase Sync Error (${action}):`, res.error.message);
             addNotification('Sync Error', `Cloud update failed: ${res.error.message}`, 'warning');
         } else {
             console.log(`Supabase Sync Success (${action}):`, event.id);
@@ -206,7 +212,7 @@ function App() {
                 <AnalyticsView />
             )}
         </Layout>
-    )
+    );
 }
 
-export default App
+export default App;
