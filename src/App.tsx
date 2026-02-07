@@ -76,32 +76,38 @@ function App() {
         fetchRemoteData();
     }, []);
 
-    // Helper to update vendor stats
-    const updateVendorStats = async (vendorName: string, newRating: number) => {
-        if (!vendorName || !newRating) return;
+    // Helper to recalculate vendor stats from scratch
+    const recalculateVendorStats = async (vendorName: string) => {
+        if (!vendorName) return;
 
-        // 1. Fetch current vendor data
-        const { data: vendors, error: fetchError } = await supabase
+        // 1. Fetch vendor ID
+        const { data: vendorData, error: vendorError } = await supabase
             .from('vendors')
-            .select('*')
+            .select('id')
             .eq('name', vendorName)
             .single();
 
-        if (fetchError || !vendors) return;
+        if (vendorError || !vendorData) return;
 
-        // 2. Calculate new stats
-        const currentRating = Number(vendors.rating) || 0;
-        const currentCount = Number(vendors.review_count) || 0;
+        // 2. Fetch all rated events for this vendor
+        const { data: events, error: eventsError } = await supabase
+            .from('events')
+            .select('rating')
+            .eq('vendor', vendorName)
+            .gt('rating', 0); // Only count events with a rating
 
-        const newCount = currentCount + 1;
-        // Running average formula: NewAvg = ((OldAvg * OldCount) + NewRating) / NewCount
-        const newAvg = ((currentRating * currentCount) + newRating) / newCount;
+        if (eventsError) return;
 
-        // 3. Update vendor
+        // 3. Calculate stats
+        const count = events?.length || 0;
+        const totalRating = events?.reduce((sum, e) => sum + (e.rating || 0), 0) || 0;
+        const avgRating = count > 0 ? totalRating / count : 0;
+
+        // 4. Update vendor
         await supabase
             .from('vendors')
-            .update({ rating: newAvg, review_count: newCount })
-            .eq('id', vendors.id);
+            .update({ rating: avgRating, review_count: count })
+            .eq('id', vendorData.id);
     };
 
     // Helper to sync events
@@ -127,10 +133,6 @@ function App() {
         let res;
         if (action === 'insert') {
             res = await supabase.from('events').insert([dbEvent]);
-            // Helper: Update vendor rating if present
-            if (!res.error && dbEvent.vendor && dbEvent.rating && dbEvent.rating > 0) {
-                updateVendorStats(dbEvent.vendor, dbEvent.rating);
-            }
         } else if (action === 'update') {
             res = await supabase.from('events').update(dbEvent).eq('id', event.id);
         } else if (action === 'delete') {
@@ -142,6 +144,10 @@ function App() {
             addNotification('Sync Error', `Cloud update failed: ${res.error.message}`, 'warning');
         } else {
             console.log(`Supabase Sync Success (${action}):`, event.id);
+            // Trigger recalculation for the involved vendor
+            if (event.vendor) {
+                recalculateVendorStats(event.vendor);
+            }
         }
     };
 
