@@ -74,8 +74,8 @@ function App() {
     const syncEvent = async (event: Event, action: 'insert' | 'update' | 'delete') => {
         if (!isConnected) return; // Don't try if offline/mock
 
-        // Map React camelCase to DB snake_case
-        const dbEvent: any = {
+        // Map React camelCase to DB snake_case for Supabase
+        const dbEvent = {
             id: event.id,
             status: event.status,
             vendor: event.vendor,
@@ -83,8 +83,9 @@ function App() {
             type: event.type,
             price: event.price,
             satisfaction: event.satisfaction,
-            review_notes: (event as any).reviewNotes,
-            created_at: (event as any).created_at || event.timestamp
+            notes: event.notes,
+            review_notes: event.reviewNotes,
+            created_at: event.created_at || event.timestamp
         };
 
         let res;

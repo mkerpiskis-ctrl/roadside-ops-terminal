@@ -1,12 +1,14 @@
 export interface Event {
     id: string;
     timestamp: string;
+    created_at?: string; // Cloud timestamp
     status: 'resolved' | 'review' | 'pending' | 'void';
     vendor: string;
     location: string;
     type: string;
     price: number;
     satisfaction: 'good' | 'bad' | 'neutral';
+    notes?: string;
     reviewNotes?: string;
 }
 
