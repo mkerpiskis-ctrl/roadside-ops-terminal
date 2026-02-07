@@ -33,6 +33,11 @@ interface LogEventFormData {
     rating: number;
     notes: string;
     reviewNotes: string;
+    // Financials
+    total_estimate: string;
+    hourly_rate: string;
+    callout_fee: string;
+    cost_context: string[];
 }
 
 export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEventModalProps) {
@@ -49,7 +54,12 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         job_status: 'On Call',
         rating: 0,
         notes: '',
-        reviewNotes: ''
+        reviewNotes: '',
+        // Financials
+        total_estimate: '',
+        hourly_rate: '',
+        callout_fee: '',
+        cost_context: []
     });
 
     const [vendors, setVendors] = useState<any[]>([]);
@@ -88,7 +98,12 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 job_status: initialData.job_status || 'Completed',
                 rating: initialData.rating || 0,
                 notes: initialData.notes || '',
-                reviewNotes: initialData.reviewNotes || ''
+                reviewNotes: initialData.reviewNotes || '',
+                // Financials
+                total_estimate: initialData.total_estimate ? initialData.total_estimate.toString() : '',
+                hourly_rate: initialData.hourly_rate ? initialData.hourly_rate.toString() : '',
+                callout_fee: initialData.callout_fee ? initialData.callout_fee.toString() : '',
+                cost_context: initialData.cost_context || []
             });
         } else {
             // Reset form
@@ -103,7 +118,12 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 job_status: 'On Call', // Default for new? Or Completed? User asked for On Call option.
                 rating: 0,
                 notes: '',
-                reviewNotes: ''
+                reviewNotes: '',
+                // Financials
+                total_estimate: '',
+                hourly_rate: '',
+                callout_fee: '',
+                cost_context: []
             });
             setTouched({});
         }
@@ -115,6 +135,15 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
             flags: prev.flags.includes(flag)
                 ? prev.flags.filter(f => f !== flag)
                 : [...prev.flags, flag]
+        }));
+    };
+
+    const toggleContext = (ctx: string) => {
+        setFormData(prev => ({
+            ...prev,
+            cost_context: prev.cost_context.includes(ctx)
+                ? prev.cost_context.filter(c => c !== ctx)
+                : [...prev.cost_context, ctx]
         }));
     };
 
@@ -362,6 +391,68 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                     )}
 
                     <div className="h-px bg-slate-800" />
+
+                    {/* Financials & Context */}
+                    <div className="space-y-4">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <DollarSign size={14} />
+                            Financial Breakdown
+                        </h3>
+
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-[10px] text-slate-500 uppercase font-bold">Total Estimate</label>
+                                <input
+                                    type="number"
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-sm py-1.5 px-2 outline-none focus:border-blue-500 font-mono"
+                                    placeholder="0.00"
+                                    value={formData.total_estimate}
+                                    onChange={e => setFormData({ ...formData, total_estimate: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] text-slate-500 uppercase font-bold">Hourly Rate</label>
+                                <input
+                                    type="number"
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-sm py-1.5 px-2 outline-none focus:border-blue-500 font-mono"
+                                    placeholder="0.00"
+                                    value={formData.hourly_rate}
+                                    onChange={e => setFormData({ ...formData, hourly_rate: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] text-slate-500 uppercase font-bold">Callout Fee</label>
+                                <input
+                                    type="number"
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-sm py-1.5 px-2 outline-none focus:border-blue-500 font-mono"
+                                    placeholder="0.00"
+                                    value={formData.callout_fee}
+                                    onChange={e => setFormData({ ...formData, callout_fee: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-slate-500 uppercase font-bold">Cost Context</label>
+                            <div className="flex flex-wrap gap-2">
+                                {['Overtime', 'Weekend', 'Holiday', 'Heavy Duty', 'Mileage', 'Parts'].map(ctx => (
+                                    <button
+                                        key={ctx}
+                                        type="button"
+                                        onClick={() => toggleContext(ctx)}
+                                        className={cn(
+                                            "px-2 py-1 rounded-sm text-[10px] font-bold uppercase tracking-wide border transition-all",
+                                            formData.cost_context.includes(ctx)
+                                                ? "bg-blue-900/30 text-blue-400 border-blue-800"
+                                                : "bg-slate-900 text-slate-500 border-slate-800 hover:border-slate-700"
+                                        )}
+                                    >
+                                        {ctx}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Flags */}
                     <div className="space-y-2">

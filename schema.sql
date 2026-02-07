@@ -12,7 +12,12 @@ create table events (
   job_status text, -- New field for 'On Call', 'Completed', etc.
   rating numeric, -- 1-5 Star Rating
   notes text,
-  review_notes text 
+  review_notes text,
+  -- Financials
+  total_estimate numeric,
+  hourly_rate numeric,
+  callout_fee numeric,
+  cost_context text[]
 );
 
 -- Vendors Table

@@ -12,6 +12,11 @@ export interface Event {
     rating?: number; // 1-5 Star Rating
     notes?: string;
     reviewNotes?: string;
+    // Financials
+    total_estimate?: number;
+    hourly_rate?: number;
+    callout_fee?: number;
+    cost_context?: string[]; // e.g. ['Overtime', 'Weekend', 'Heavy Duty']
 }
 
 export interface Notification {

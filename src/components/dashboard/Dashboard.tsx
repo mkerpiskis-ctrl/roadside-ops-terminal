@@ -35,6 +35,11 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
                 rating: formData.rating,
                 notes: formData.notes,
                 reviewNotes: formData.reviewNotes,
+                // Financials
+                total_estimate: formData.total_estimate ? Number(formData.total_estimate) : null,
+                hourly_rate: formData.hourly_rate ? Number(formData.hourly_rate) : null,
+                callout_fee: formData.callout_fee ? Number(formData.callout_fee) : null,
+                cost_context: formData.cost_context,
             };
             onEditEvent(updatedEvent);
         } else {
@@ -52,7 +57,12 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
                 rating: formData.rating,
                 notes: formData.notes,
                 reviewNotes: formData.reviewNotes,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                // Financials
+                total_estimate: formData.total_estimate ? Number(formData.total_estimate) : null,
+                hourly_rate: formData.hourly_rate ? Number(formData.hourly_rate) : null,
+                callout_fee: formData.callout_fee ? Number(formData.callout_fee) : null,
+                cost_context: formData.cost_context,
             };
             onLogEvent(newEvent);
         }
