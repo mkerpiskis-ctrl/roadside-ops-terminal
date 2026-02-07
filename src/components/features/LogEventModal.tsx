@@ -149,7 +149,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         onClose();
     };
 
-    const handleTransition = (newStatus: 'pending' | 'resolved') => {
+    const handleTransition = (newStatus: 'pending' | 'resolved' | 'void') => {
         // Validation check even for transitions if editing
         if (!formData.location.trim()) {
             setTouched(prev => ({ ...prev, location: true }));
