@@ -1,5 +1,5 @@
 import { Bell, Search, ChevronRight, Info, AlertTriangle, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Notification } from '../../types';
 import { cn } from '../../lib/utils';
 
@@ -11,7 +11,24 @@ interface HeaderProps {
 
 export function Header({ notifications = [], onClearNotifications, connectionStatus = 'online' }: HeaderProps) {
     const [isNotifOpen, setIsNotifOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const notifRef = useRef<HTMLDivElement>(null);
+    const profileRef = useRef<HTMLDivElement>(null);
     const unreadCount = notifications.length;
+
+    // Click outside handler
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+                setIsNotifOpen(false);
+            }
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setIsProfileOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     return (
         <header className="h-14 fixed top-0 left-64 right-0 bg-slate-950 border-b border-slate-900 z-40 flex items-center justify-between px-6">
@@ -74,7 +91,7 @@ export function Header({ notifications = [], onClearNotifications, connectionSta
                 </div>
 
                 {/* Notifications */}
-                <div className="relative">
+                <div className="relative" ref={notifRef}>
                     <button
                         className={cn(
                             "relative text-slate-400 hover:text-slate-200 transition-colors",
@@ -91,7 +108,7 @@ export function Header({ notifications = [], onClearNotifications, connectionSta
                     </button>
 
                     {isNotifOpen && (
-                        <div className="absolute right-0 mt-2 w-80 bg-slate-950 border border-slate-800 rounded shadow-2xl z-50 overflow-hidden">
+                        <div className="absolute right-0 mt-2 w-80 bg-slate-950 border border-slate-800 rounded shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                             <div className="flex items-center justify-between px-4 py-2 border-b border-slate-900 bg-slate-900/50">
                                 <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Notifications</span>
                                 <button
@@ -126,14 +143,40 @@ export function Header({ notifications = [], onClearNotifications, connectionSta
                 </div>
 
                 {/* User Profile */}
-                <div className="flex items-center gap-3 pl-6 border-l border-slate-900">
-                    <div className="text-right hidden sm:block">
-                        <div className="text-xs text-slate-200 font-medium">L. KOWALSKI</div>
-                        <div className="text-[10px] text-slate-500 font-mono">DISPATCH_L1</div>
-                    </div>
-                    <div className="h-8 w-8 bg-slate-800 rounded flex items-center justify-center text-xs font-bold text-slate-400 border border-slate-700">
-                        LK
-                    </div>
+                <div className="relative pl-6 border-l border-slate-900" ref={profileRef}>
+                    <button
+                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                        className="flex items-center gap-3 hover:bg-slate-900/50 rounded-sm p-1 transition-colors outline-none"
+                    >
+                        <div className="text-right hidden sm:block">
+                            <div className="text-xs text-slate-200 font-medium">L. KOWALSKI</div>
+                            <div className="text-[10px] text-slate-500 font-mono text-right">DISPATCH_L1</div>
+                        </div>
+                        <div className="h-8 w-8 bg-slate-800 rounded flex items-center justify-center text-xs font-bold text-slate-400 border border-slate-700">
+                            LK
+                        </div>
+                    </button>
+
+                    {isProfileOpen && (
+                        <div className="absolute right-0 mt-2 w-48 bg-slate-950 border border-slate-800 rounded shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="p-3 border-b border-slate-900">
+                                <p className="text-xs font-bold text-slate-200">Leon Kowalski</p>
+                                <p className="text-[10px] text-slate-500">leon.k@tyrell.corp</p>
+                            </div>
+                            <div className="py-1">
+                                <button className="w-full text-left px-4 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-900 transition-colors">
+                                    Profile Settings
+                                </button>
+                                <button className="w-full text-left px-4 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-900 transition-colors">
+                                    System Preferences
+                                </button>
+                                <div className="h-px bg-slate-900 my-1" />
+                                <button className="w-full text-left px-4 py-2 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/20 transition-colors">
+                                    Sign Out
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </header>
