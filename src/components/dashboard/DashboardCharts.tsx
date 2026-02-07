@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Event } from '../../types';
 
@@ -6,37 +7,51 @@ interface DashboardChartsProps {
 }
 
 export function DashboardCharts({ data }: DashboardChartsProps) {
-    // 1. Spend vs Volume (Mocked/Aggregated)
-    // In a real app, we'd aggregate `data` by day or week.
-    // For now, let's create some derived data from the events or use static shape if data is sparse.
-    const volumeData = [
-        { name: 'Mon', volume: 4, spend: 1200 },
-        { name: 'Tue', volume: 7, spend: 2100 },
-        { name: 'Wed', volume: 5, spend: 1600 },
-        { name: 'Thu', volume: 8, spend: 2400 },
-        { name: 'Fri', volume: 12, spend: 3800 },
-        { name: 'Sat', volume: 9, spend: 2900 },
-        { name: 'Sun', volume: 3, spend: 900 },
-    ];
+    // 1. Weekly Volume & Spend (Last 7 Days)
+    const volumeData = useMemo(() => {
+        const today = new Date();
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date();
+            d.setDate(today.getDate() - (6 - i)); // Go back 6 days to today
+            return d;
+        });
+
+        const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        return last7Days.map(date => {
+            const dateString = date.toISOString().slice(0, 10); // YYYY-MM-DD
+            const dayName = dayLabels[date.getDay()];
+
+            // Filter events for this day (local time approx comparison for simplicity, or strict UTC if stored as such)
+            // Assuming timestamp is ISO string or YYYY-MM-DD format
+            const eventsForDay = data.filter(e => {
+                // Handle various timestamp formats from DB or Mock
+                const eventDate = e.created_at || e.timestamp;
+                return eventDate && eventDate.startsWith(dateString);
+            });
+
+            const volume = eventsForDay.length;
+            const spend = eventsForDay.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
+
+            return { name: dayName, volume, spend, date: dateString };
+        });
+    }, [data]);
 
     // 2. Incident Types (Aggregated from real data)
-    const typeCounts: Record<string, number> = {};
-    data.forEach(item => {
-        typeCounts[item.type] = (typeCounts[item.type] || 0) + 1;
-    });
+    const finalPieData = useMemo(() => {
+        const typeCounts: Record<string, number> = {};
+        data.forEach(item => {
+            const t = item.type || 'Unknown';
+            typeCounts[t] = (typeCounts[t] || 0) + 1;
+        });
 
-    const pieData = Object.keys(typeCounts).map(type => ({
-        name: type,
-        value: typeCounts[type]
-    })).sort((a, b) => b.value - a.value).slice(0, 5); // Top 5
+        const sorted = Object.keys(typeCounts).map(type => ({
+            name: type,
+            value: typeCounts[type]
+        })).sort((a, b) => b.value - a.value).slice(0, 5); // Top 5
 
-    // Fallback if no data
-    const finalPieData = pieData.length > 0 ? pieData : [
-        { name: 'Towing', value: 40 },
-        { name: 'Tire', value: 30 },
-        { name: 'Lockout', value: 20 },
-        { name: 'Fuel', value: 10 },
-    ];
+        return sorted.length > 0 ? sorted : [{ name: 'No Data', value: 1 }];
+    }, [data]);
 
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
