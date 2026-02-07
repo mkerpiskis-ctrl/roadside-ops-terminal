@@ -12,6 +12,7 @@ interface LayoutProps {
     notifications: Notification[];
     onClearNotifications: () => void;
     alertCount: number;
+    connectionStatus: 'connecting' | 'online' | 'offline' | 'error';
 }
 
 export function Layout({
@@ -22,11 +23,16 @@ export function Layout({
     activeVendorFilter,
     notifications,
     onClearNotifications,
-    alertCount
+    alertCount,
+    connectionStatus
 }: LayoutProps) {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-blue-500/30">
-            <Header notifications={notifications} onClearNotifications={onClearNotifications} />
+            <Header
+                notifications={notifications}
+                onClearNotifications={onClearNotifications}
+                connectionStatus={connectionStatus}
+            />
             <Sidebar
                 currentView={currentView}
                 onNavigate={onNavigate}
@@ -34,7 +40,6 @@ export function Layout({
                 activeVendorFilter={activeVendorFilter}
                 alertCount={alertCount}
             />
-            <Header />
 
             {/* Main Content Area */}
             {/* Padding Left = Sidebar width (w-64 = 16rem = 256px) */}

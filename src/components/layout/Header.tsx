@@ -6,9 +6,10 @@ import { cn } from '../../lib/utils';
 interface HeaderProps {
     notifications?: Notification[];
     onClearNotifications?: () => void;
+    connectionStatus?: 'connecting' | 'online' | 'offline' | 'error';
 }
 
-export function Header({ notifications = [], onClearNotifications }: HeaderProps) {
+export function Header({ notifications = [], onClearNotifications, connectionStatus = 'online' }: HeaderProps) {
     const [isNotifOpen, setIsNotifOpen] = useState(false);
     const unreadCount = notifications.length;
 
@@ -47,10 +48,29 @@ export function Header({ notifications = [], onClearNotifications }: HeaderProps
                 {/* Connection Status */}
                 <div className="flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        <span className={cn(
+                            "absolute inline-flex h-full w-full rounded-full opacity-75",
+                            connectionStatus === 'online' ? "animate-ping bg-emerald-400" :
+                                connectionStatus === 'connecting' ? "animate-pulse bg-blue-400" :
+                                    "bg-rose-400"
+                        )}></span>
+                        <span className={cn(
+                            "relative inline-flex rounded-full h-2 w-2",
+                            connectionStatus === 'online' ? "bg-emerald-500" :
+                                connectionStatus === 'connecting' ? "bg-blue-500" :
+                                    "bg-rose-500"
+                        )}></span>
                     </span>
-                    <span className="text-[10px] font-mono text-emerald-500 font-bold tracking-wider">SYSTEM CONNECTED</span>
+                    <span className={cn(
+                        "text-[10px] font-mono font-bold tracking-wider",
+                        connectionStatus === 'online' ? "text-emerald-500" :
+                            connectionStatus === 'connecting' ? "text-blue-500" :
+                                "text-rose-500"
+                    )}>
+                        {connectionStatus === 'online' ? 'SYSTEM ONLINE' :
+                            connectionStatus === 'connecting' ? 'SYNCING...' :
+                                'OFFLINE (MOCK DATA)'}
+                    </span>
                 </div>
 
                 {/* Notifications */}

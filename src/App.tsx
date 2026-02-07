@@ -23,9 +23,10 @@ import { supabase } from './lib/supabase';
 function App() {
     const [currentView, setCurrentView] = useState<'dashboard' | 'service_log' | 'vendors' | 'analytics'>('dashboard');
     const [vendorFilter, setVendorFilter] = useState<string | null>(null);
-    const [data, setData] = useState<Event[]>(MOCK_DATA);
+    const [data, setData] = useState<Event[]>([]); // Start empty
     const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [isConnected, setIsConnected] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'online' | 'offline' | 'error'>('connecting');
+    const isConnected = connectionStatus === 'online';
 
     // Fetch Events and Notifications from Supabase
     useEffect(() => {
@@ -37,16 +38,12 @@ function App() {
                 .order('created_at', { ascending: false });
 
             if (!eventError) {
-                // Connection successful (table exists)
-                setIsConnected(true);
-
+                setConnectionStatus('online');
                 // Only seed mock data if the cloud DB is COMPLETELY empty
                 if (events && events.length > 0) {
                     setData(events);
                 } else if (!localStorage.getItem('roadside_db_seeded')) {
-                    // One-time seed for demonstration if cloud is empty
                     console.log("Supabase empty. Seeding initial data...");
-                    // Optional: You could bulk insert MOCK_DATA here
                     // For now, we'll just start with an empty list if they deleted everything
                     setData([]);
                     localStorage.setItem('roadside_db_seeded', 'true');
@@ -54,10 +51,11 @@ function App() {
                     setData([]); // DB is legitimately empty
                 }
             } else {
-                console.log("Supabase connection error or table missing:", eventError.message);
-                // Fallback to local storage if available
+                setConnectionStatus('error');
+                console.error("Supabase connection error or table missing:", eventError.message);
+                // Fallback to local storage or mock
                 const saved = localStorage.getItem('roadside_events');
-                if (saved) setData(JSON.parse(saved));
+                setData(saved ? JSON.parse(saved) : MOCK_DATA);
             }
 
             // 2. Notifications
@@ -156,6 +154,7 @@ function App() {
             notifications={notifications}
             onClearNotifications={handleClearNotifications}
             alertCount={alertCount}
+            connectionStatus={connectionStatus}
         >
             {currentView === 'dashboard' && (
                 <Dashboard
