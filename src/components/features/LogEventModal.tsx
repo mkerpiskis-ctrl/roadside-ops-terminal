@@ -16,7 +16,8 @@ const SERVICE_TYPES = [
     'Fuel Delivery', 'Lockout', 'Load Shift', 'Other'
 ];
 
-const FLAGS = [
+const COST_CONTEXT_OPTIONS = [
+    'Overtime', 'Weekend', 'Holiday', 'Heavy Duty', 'Mileage', 'Parts',
     'After-hours', 'Accident Recovery', 'Police/DOT',
     'Waiting Time', 'Parts Run', 'Extra Equipment'
 ];
@@ -28,7 +29,6 @@ interface LogEventFormData {
     vendor: string;
     price: string;
     satisfaction: 'good' | 'bad' | 'neutral';
-    flags: string[];
     job_status: string;
     rating: number;
     notes: string;
@@ -50,7 +50,6 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         vendor: '',
         price: '',
         satisfaction: 'neutral',
-        flags: [],
         job_status: 'On Call',
         rating: 0,
         notes: '',
@@ -94,7 +93,6 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 vendor: initialData.vendor,
                 price: initialData.price.toString(),
                 satisfaction: initialData.satisfaction,
-                flags: [],
                 job_status: initialData.job_status || 'Completed',
                 rating: initialData.rating || 0,
                 notes: initialData.notes || '',
@@ -114,7 +112,6 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                 vendor: '',
                 price: '',
                 satisfaction: 'neutral',
-                flags: [],
                 job_status: 'On Call', // Default for new? Or Completed? User asked for On Call option.
                 rating: 0,
                 notes: '',
@@ -129,14 +126,6 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
         }
     }, [initialData, isOpen]);
 
-    const toggleFlag = (flag: string) => {
-        setFormData(prev => ({
-            ...prev,
-            flags: prev.flags.includes(flag)
-                ? prev.flags.filter(f => f !== flag)
-                : [...prev.flags, flag]
-        }));
-    };
 
     const toggleContext = (ctx: string) => {
         setFormData(prev => ({
@@ -335,20 +324,6 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                         </div>
                     </div>
 
-                    {/* Conditional Comments Field */}
-                    {formData.rating > 0 && (
-                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <label className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">Additional Feedback / Comments</label>
-                            <textarea
-                                className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-sm py-2 px-3 focus:border-amber-500 outline-none font-mono min-h-[80px] placeholder:text-slate-700"
-                                placeholder="Please share details about your experience..."
-                                value={formData.notes || ''}
-                                onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                autoFocus
-                            />
-                        </div>
-                    )}
-
                     <div className="h-px bg-slate-800" />
 
                     {/* Financials & Context */}
@@ -394,7 +369,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                         <div className="space-y-2">
                             <label className="text-[10px] text-slate-500 uppercase font-bold">Cost Context</label>
                             <div className="flex flex-wrap gap-2">
-                                {['Overtime', 'Weekend', 'Holiday', 'Heavy Duty', 'Mileage', 'Parts'].map(ctx => (
+                                {COST_CONTEXT_OPTIONS.map(ctx => (
                                     <button
                                         key={ctx}
                                         type="button"
@@ -410,28 +385,6 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                                     </button>
                                 ))}
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Flags */}
-                    <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Cost Context Flags</label>
-                        <div className="flex flex-wrap gap-2">
-                            {FLAGS.map(flag => (
-                                <button
-                                    key={flag}
-                                    type="button"
-                                    onClick={() => toggleFlag(flag)}
-                                    className={cn(
-                                        "text-[10px] uppercase px-2 py-1 rounded-full border transition-colors font-mono tracking-tight",
-                                        formData.flags.includes(flag)
-                                            ? "bg-blue-900/50 text-blue-300 border-blue-800"
-                                            : "bg-slate-900 text-slate-500 border-slate-800 hover:border-slate-700"
-                                    )}
-                                >
-                                    {flag}
-                                </button>
-                            ))}
                         </div>
                     </div>
                     {/* Service Status (Renamed from Outcome) */}
@@ -495,6 +448,20 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Conditional Comments Field */}
+                            {formData.rating > 0 && (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <label className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">Additional Feedback / Comments</label>
+                                    <textarea
+                                        className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-sm py-2 px-3 focus:border-amber-500 outline-none font-mono min-h-[80px] placeholder:text-slate-700"
+                                        placeholder="Please share details about your experience..."
+                                        value={formData.notes || ''}
+                                        onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
                         </div>
                     )}
 
