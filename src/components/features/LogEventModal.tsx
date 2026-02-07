@@ -21,17 +21,31 @@ const FLAGS = [
     'Waiting Time', 'Parts Run', 'Extra Equipment'
 ];
 
+interface LogEventFormData {
+    category: string;
+    type: string;
+    location: string;
+    vendor: string;
+    price: string;
+    satisfaction: 'good' | 'bad' | 'neutral';
+    flags: string[];
+    job_status: string;
+    rating: number;
+    notes: string;
+    reviewNotes: string;
+}
+
 export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEventModalProps) {
     if (!isOpen) return null;
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<LogEventFormData>({
         category: 'Roadside',
         type: 'Roadside Service',
         location: '',
         vendor: '',
         price: '',
         satisfaction: 'good',
-        flags: [] as string[],
+        flags: [],
         job_status: 'Completed',
         rating: 0,
         notes: '',
@@ -303,7 +317,7 @@ export function LogEventModal({ isOpen, onClose, onSubmit, initialData }: LogEve
                                             size={18}
                                             className={cn(
                                                 "transition-colors",
-                                                (formData as any).rating >= star ? "fill-amber-400 text-amber-400" : "text-slate-700 group-hover:text-amber-400/50"
+                                                formData.rating >= star ? "fill-amber-400 text-amber-400" : "text-slate-700 group-hover:text-amber-400/50"
                                             )}
                                         />
                                     </button>
