@@ -3,7 +3,7 @@ import { Search, MapPin, Star, MoreHorizontal, ShieldCheck, AlertTriangle } from
 import { cn } from '../../lib/utils';
 import { Event } from '../../types';
 import { VendorProfile } from './VendorProfile';
-import { VendorData } from '../features/EditVendorModal';
+import { VendorData, EditVendorModal } from '../features/EditVendorModal';
 
 // Mock Vendor Data (Ideally this would come from a prop or context as well)
 const INITIAL_VENDORS: VendorData[] = [
@@ -95,6 +95,7 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
     const [vendors, setVendors] = useState<VendorData[]>(INITIAL_VENDORS);
     const [filter, setFilter] = useState('');
     const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Fetch Vendors from Supabase
     useEffect(() => {
@@ -114,7 +115,7 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
                     // Sync initial to DB
                     await supabase.from('vendors').insert(INITIAL_VENDORS);
                 } else {
-                    setVendors([]);
+                    setVendors(remoteVendors || []); // Ensure empty array if null
                 }
             } else {
                 console.log("Vendors fetch error:", error.message);
@@ -138,6 +139,19 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
             console.error('Error updating vendor:', error);
             // Fallback to local storage
             localStorage.setItem('roadside_vendors', JSON.stringify(vendors.map(v => v.id === updated.id ? updated : v)));
+        }
+    };
+
+    const handleCreateVendor = async (newVendor: VendorData) => {
+        setVendors([...vendors, newVendor]);
+        setIsCreateModalOpen(false);
+
+        const { error } = await supabase
+            .from('vendors')
+            .insert([newVendor]);
+
+        if (error) {
+            console.error('Error creating vendor:', error);
         }
     };
 
@@ -171,15 +185,23 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
                     <h2 className="text-xl font-bold text-slate-100 tracking-wide">VENDOR WATCHLIST</h2>
                     <p className="text-xs text-slate-500 font-mono">PREFERRED PARTNER NETWORK</p>
                 </div>
-                <div className="relative w-64">
-                    <Search className="absolute left-3 top-2.5 text-slate-600" size={14} />
-                    <input
-                        type="text"
-                        placeholder="SEARCH VENDORS..."
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded pl-9 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500 font-mono"
-                    />
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded text-xs font-bold transition-colors shadow-lg shadow-blue-900/20"
+                    >
+                        + ADD VENDOR
+                    </button>
+                    <div className="relative w-64">
+                        <Search className="absolute left-3 top-2.5 text-slate-600" size={14} />
+                        <input
+                            type="text"
+                            placeholder="SEARCH VENDORS..."
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 rounded pl-9 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500 font-mono"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -242,6 +264,13 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
                     </div>
                 ))}
             </div>
+
+            <EditVendorModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSave={handleCreateVendor}
+                vendor={null}
+            />
         </div>
     );
 }

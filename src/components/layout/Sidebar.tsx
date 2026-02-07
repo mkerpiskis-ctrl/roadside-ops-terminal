@@ -8,8 +8,6 @@ export type ViewType = 'dashboard' | 'service_log' | 'vendors' | 'analytics';
 interface SidebarProps {
     currentView: ViewType;
     onNavigate: (view: ViewType) => void;
-    onFilterVendor: (vendor: string) => void;
-    activeVendorFilter: string | null;
 }
 
 interface SidebarItemProps {
@@ -44,7 +42,7 @@ const SidebarItem = ({ icon: Icon, label, active, alertCount, onClick }: Sidebar
     );
 };
 
-export function Sidebar({ currentView, onNavigate, onFilterVendor, activeVendorFilter, alertCount }: SidebarProps & { alertCount: number }) {
+export function Sidebar({ currentView, onNavigate, alertCount }: SidebarProps & { alertCount: number }) {
     return (
         <aside className="w-64 bg-slate-950 border-r border-slate-900 h-screen fixed left-0 top-0 flex flex-col z-50">
             {/* Brand / Logo Area */}
@@ -87,44 +85,6 @@ export function Sidebar({ currentView, onNavigate, onFilterVendor, activeVendorF
                         active={currentView === 'analytics'}
                         onClick={() => onNavigate('analytics')}
                     />
-                </div>
-
-                <div>
-                    <p className="px-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2">Watchlist</p>
-                    <div className="space-y-1">
-                        {[
-                            { name: "ABS Towing", status: "ok", loc: "TX" },
-                            { name: "QuickFix", status: "warn", loc: "AL" },
-                            { name: "Metro Recovery", status: "crit", loc: "NY" }
-                        ].map((vendor, i) => (
-                            <div
-                                key={i}
-                                onClick={() => {
-                                    onFilterVendor(vendor.name);
-                                    onNavigate('dashboard');
-                                }}
-                                className={cn(
-                                    "px-3 py-2 rounded hover:bg-slate-900/50 cursor-pointer group transition-colors",
-                                    activeVendorFilter === vendor.name ? "bg-slate-900 ring-1 ring-slate-700" : ""
-                                )}
-                            >
-                                <div className="flex justify-between items-center mb-0.5">
-                                    <span className={cn(
-                                        "text-xs font-mono transition-colors",
-                                        activeVendorFilter === vendor.name ? "text-blue-400" : "text-slate-300 group-hover:text-white"
-                                    )}>{vendor.name}</span>
-                                    <span className={cn(
-                                        "w-1.5 h-1.5 rounded-full",
-                                        vendor.status === 'ok' ? "bg-emerald-500" : vendor.status === 'warn' ? "bg-amber-500" : "bg-rose-500"
-                                    )} />
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[10px] text-slate-500">{vendor.loc}</span>
-                                    <span className="text-[10px] text-slate-600 group-hover:text-slate-400 font-mono tracking-tighter">REL: 9{8 - i}%</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
                 </div>
             </div>
 

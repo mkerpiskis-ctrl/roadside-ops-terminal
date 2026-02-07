@@ -17,21 +17,38 @@ export interface VendorData {
 }
 
 interface EditVendorModalProps {
-    vendor: VendorData;
+    vendor?: VendorData | null;
     isOpen: boolean;
     onClose: () => void;
     onSave: (updatedVendor: VendorData) => void;
 }
 
+const EMPTY_VENDOR: VendorData = {
+    id: '',
+    name: '',
+    location: '',
+    rating: 0,
+    status: 'ok',
+    joined: new Date().toISOString().split('T')[0],
+    reliability: 100,
+    address: '',
+    phone: '',
+    services: []
+};
+
 export function EditVendorModal({ vendor, isOpen, onClose, onSave }: EditVendorModalProps) {
-    const [formData, setFormData] = useState<VendorData>(vendor);
+    const [formData, setFormData] = useState<VendorData>(vendor || EMPTY_VENDOR);
     const [newService, setNewService] = useState('');
 
     useEffect(() => {
-        setFormData(vendor);
+        if (isOpen) {
+            setFormData(vendor || { ...EMPTY_VENDOR, id: `V-${Date.now().toString().slice(-4)}` });
+        }
     }, [vendor, isOpen]);
 
     if (!isOpen) return null;
+
+    const isEditing = !!vendor;
 
     const handleAddService = () => {
         if (newService.trim()) {
@@ -57,10 +74,12 @@ export function EditVendorModal({ vendor, isOpen, onClose, onSave }: EditVendorM
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-900 bg-slate-900/50">
                     <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                        Edit Vendor Profile
-                        <span className="text-xs font-mono text-slate-500 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                            {vendor.id}
-                        </span>
+                        {isEditing ? 'Edit Vendor Profile' : 'Add New Vendor'}
+                        {isEditing && (
+                            <span className="text-xs font-mono text-slate-500 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                                {vendor.id}
+                            </span>
+                        )}
                     </h2>
                     <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
                         <X size={20} />

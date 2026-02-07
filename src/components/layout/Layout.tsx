@@ -7,8 +7,6 @@ interface LayoutProps {
     children: ReactNode;
     currentView: 'dashboard' | 'service_log' | 'vendors' | 'analytics';
     onNavigate: (view: 'dashboard' | 'service_log' | 'vendors' | 'analytics') => void;
-    onFilterVendor: (vendor: string | null) => void;
-    activeVendorFilter: string | null;
     notifications: Notification[];
     onClearNotifications: () => void;
     alertCount: number;
@@ -19,8 +17,6 @@ export function Layout({
     children,
     currentView,
     onNavigate,
-    onFilterVendor,
-    activeVendorFilter,
     notifications,
     onClearNotifications,
     alertCount,
@@ -36,8 +32,6 @@ export function Layout({
             <Sidebar
                 currentView={currentView}
                 onNavigate={onNavigate}
-                onFilterVendor={onFilterVendor}
-                activeVendorFilter={activeVendorFilter}
                 alertCount={alertCount}
             />
 

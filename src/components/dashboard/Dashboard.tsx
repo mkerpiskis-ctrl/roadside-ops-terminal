@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
+import { ShieldAlert, ArrowRight, LayoutList } from 'lucide-react';
 import { StatCard } from './StatCard';
-import { ActionBar } from './ActionBar';
 import { DataGrid } from './DataGrid';
+import { DashboardCharts } from './DashboardCharts';
 import { LogEventModal } from '../features/LogEventModal';
 import { Event } from '../../types';
 
@@ -11,13 +12,12 @@ interface DashboardProps {
     onLogEvent: (event: Event) => void;
     onEditEvent: (event: Event) => void;
     onDeleteEvent: (id: string) => void;
+    onNavigate: (view: 'dashboard' | 'service_log' | 'vendors' | 'analytics') => void;
 }
 
-export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDeleteEvent }: DashboardProps) {
+export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDeleteEvent, onNavigate }: DashboardProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'review' | 'pending' | 'resolved'>('all');
 
     const handleFormSubmit = (formData: any) => {
         const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
@@ -31,7 +31,8 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
                 type: formData.type,
                 price: Number(formData.price) || 0,
                 satisfaction: formData.satisfaction,
-                // Preserve original ID and timestamp if desired, or update timestamp
+                notes: formData.notes,
+                reviewNotes: formData.reviewNotes,
             };
             onEditEvent(updatedEvent);
         } else {
@@ -44,7 +45,9 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
                 location: formData.location || 'Unknown Loc',
                 type: formData.type,
                 price: Number(formData.price) || 0,
-                satisfaction: formData.satisfaction
+                satisfaction: formData.satisfaction,
+                notes: formData.notes,
+                created_at: new Date().toISOString()
             };
             onLogEvent(newEvent);
         }
@@ -63,26 +66,11 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
     // Filter Data Source
     const filteredData = useMemo(() => {
         return data.filter(item => {
-            // Vendor Filter (from Sidebar)
+            // Vendor Filter (from Sidebar - legacy/external)
             if (vendorFilter && item.vendor !== vendorFilter) return false;
-
-            // Status Filter
-            if (statusFilter !== 'all' && item.status !== statusFilter) return false;
-
-            // Search Query
-            if (searchQuery) {
-                const q = searchQuery.toLowerCase();
-                return (
-                    item.vendor.toLowerCase().includes(q) ||
-                    item.location.toLowerCase().includes(q) ||
-                    item.type.toLowerCase().includes(q) ||
-                    item.id.toLowerCase().includes(q)
-                );
-            }
-
             return true;
         });
-    }, [data, vendorFilter, statusFilter, searchQuery]);
+    }, [data, vendorFilter]);
 
     // Calculate Dynamic Stats
     const stats = useMemo(() => {
@@ -93,9 +81,31 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
         return { totalSpend, avgCost, count: filteredData.length, activeAlerts };
     }, [filteredData]);
 
+    // Urgent Alerts Only
+    const urgentItems = useMemo(() => {
+        return data.filter(item => item.status === 'review' || item.status === 'pending').slice(0, 5);
+    }, [data]);
+
     return (
-        <div className="max-w-7xl mx-auto">
-            {/* Ticker Tape */}
+        <div className="max-w-7xl mx-auto pb-10">
+            {/* Header / Title Area */}
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-100 tracking-tight">Mission Control</h2>
+                    <p className="text-sm text-slate-500 font-mono">LIVE OPERATIONS MONITORING</p>
+                </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={openLogModal}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors shadow-lg shadow-blue-900/20 flex items-center gap-2"
+                    >
+                        <LayoutList size={14} />
+                        LOG EVENT
+                    </button>
+                </div>
+            </div>
+
+            {/* KPI Ticker */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <StatCard
                     label="Total Spend (MTD)"
@@ -115,33 +125,43 @@ export function Dashboard({ vendorFilter, data, onLogEvent, onEditEvent, onDelet
                 <StatCard
                     label="Active Alerts"
                     value={stats.activeAlerts.toString()}
-                    className="border-rose-900 bg-rose-950/10"
+                    className={stats.activeAlerts > 0 ? "border-rose-900 bg-rose-950/20 transition-colors animate-pulse-slow" : "border-slate-800"}
                 />
             </div>
 
-            {/* Main Content */}
-            <div className="">
-                {/* Active Filter Badge */}
-                {vendorFilter && (
-                    <div className="mb-4 flex items-center gap-2">
-                        <span className="text-[10px] uppercase font-bold text-slate-500">Filtered by:</span>
-                        <span className="text-xs px-2 py-1 bg-blue-900/30 text-blue-400 border border-blue-900 rounded font-mono">
-                            VENDOR: {vendorFilter}
-                        </span>
-                    </div>
-                )}
+            {/* Visualization Layer */}
+            <DashboardCharts data={data} />
 
-                <ActionBar
-                    onLogEvent={openLogModal}
-                    onSearch={setSearchQuery}
-                    onFilterStatus={setStatusFilter}
-                    currentStatus={statusFilter}
-                />
-                <DataGrid
-                    data={filteredData}
-                    onEdit={handleEditClick}
-                    onDelete={onDeleteEvent}
-                />
+            {/* Action Items / Recent Alerts */}
+            <div className="grid grid-cols-1 gap-6">
+                <div className="bg-slate-950 border border-slate-900 rounded-lg overflow-hidden">
+                    <div className="p-4 border-b border-slate-900 flex justify-between items-center bg-slate-900/30">
+                        <div className="flex items-center gap-2">
+                            <ShieldAlert className="text-rose-500" size={18} />
+                            <h3 className="text-sm font-bold text-slate-200">RECENT CRITICAL ALERTS</h3>
+                        </div>
+                        <button
+                            onClick={() => onNavigate('service_log')}
+                            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                        >
+                            VIEW ALL ACTIVITY <ArrowRight size={12} />
+                        </button>
+                    </div>
+
+                    <div className="p-0">
+                        {urgentItems.length > 0 ? (
+                            <DataGrid
+                                data={urgentItems}
+                                onEdit={handleEditClick}
+                                onDelete={onDeleteEvent}
+                            />
+                        ) : (
+                            <div className="p-8 text-center text-slate-500 text-sm font-mono border-t border-slate-900/50">
+                                NO ACTIVE ALERTS. SYSTEM NOMINAL.
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             <LogEventModal

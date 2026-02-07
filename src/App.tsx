@@ -22,7 +22,6 @@ import { supabase } from './lib/supabase';
 
 function App() {
     const [currentView, setCurrentView] = useState<'dashboard' | 'service_log' | 'vendors' | 'analytics'>('dashboard');
-    const [vendorFilter, setVendorFilter] = useState<string | null>(null);
     const [data, setData] = useState<Event[]>([]); // Start empty
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'online' | 'offline' | 'error'>('connecting');
@@ -121,11 +120,6 @@ function App() {
         setCurrentView(view);
     };
 
-    const handleVendorFilter = (vendor: string | null) => {
-        setVendorFilter(vendor);
-        if (currentView !== 'dashboard') setCurrentView('dashboard');
-    };
-
     const addNotification = (title: string, message: string, type: Notification['type'] = 'info') => {
         const newNotif: Notification = {
             id: `n-${Date.now()}`,
@@ -171,8 +165,6 @@ function App() {
         <Layout
             currentView={currentView}
             onNavigate={handleNavigate}
-            onFilterVendor={handleVendorFilter}
-            activeVendorFilter={vendorFilter}
             notifications={notifications}
             onClearNotifications={handleClearNotifications}
             alertCount={alertCount}
@@ -180,11 +172,12 @@ function App() {
         >
             {currentView === 'dashboard' && (
                 <Dashboard
-                    vendorFilter={vendorFilter}
+                    vendorFilter={null}
                     data={data}
                     onLogEvent={handleLogEvent}
                     onEditEvent={handleEditEvent}
                     onDeleteEvent={handleDeleteEvent}
+                    onNavigate={handleNavigate}
                 />
             )}
 
