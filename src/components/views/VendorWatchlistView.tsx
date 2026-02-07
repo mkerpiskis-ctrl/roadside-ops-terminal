@@ -99,15 +99,25 @@ export function VendorWatchlistView({ events, onEditEvent, onDeleteEvent }: Vend
     // Fetch Vendors from Supabase
     useEffect(() => {
         const fetchVendors = async () => {
-            const { data, error } = await supabase
+            const { data: remoteVendors, error } = await supabase
                 .from('vendors')
                 .select('*')
                 .order('name');
 
-            if (!error && data && data.length > 0) {
-                setVendors(data);
+            if (!error) {
+                if (remoteVendors && remoteVendors.length > 0) {
+                    setVendors(remoteVendors);
+                } else if (!localStorage.getItem('roadside_vendors_seeded')) {
+                    // Seed if empty
+                    setVendors(INITIAL_VENDORS);
+                    localStorage.setItem('roadside_vendors_seeded', 'true');
+                    // Sync initial to DB
+                    await supabase.from('vendors').insert(INITIAL_VENDORS);
+                } else {
+                    setVendors([]);
+                }
             } else {
-                // Fallback to local storage if available
+                console.log("Vendors fetch error:", error.message);
                 const saved = localStorage.getItem('roadside_vendors');
                 if (saved) setVendors(JSON.parse(saved));
             }

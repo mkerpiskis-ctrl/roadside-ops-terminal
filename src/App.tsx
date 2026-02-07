@@ -36,11 +36,28 @@ function App() {
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (!eventError && events && events.length > 0) {
-                setData(events);
+            if (!eventError) {
+                // Connection successful (table exists)
                 setIsConnected(true);
+
+                // Only seed mock data if the cloud DB is COMPLETELY empty
+                if (events && events.length > 0) {
+                    setData(events);
+                } else if (!localStorage.getItem('roadside_db_seeded')) {
+                    // One-time seed for demonstration if cloud is empty
+                    console.log("Supabase empty. Seeding initial data...");
+                    // Optional: You could bulk insert MOCK_DATA here
+                    // For now, we'll just start with an empty list if they deleted everything
+                    setData([]);
+                    localStorage.setItem('roadside_db_seeded', 'true');
+                } else {
+                    setData([]); // DB is legitimately empty
+                }
             } else {
-                console.log("Supabase unavailable or empty. Using Mock Data.");
+                console.log("Supabase connection error or table missing:", eventError.message);
+                // Fallback to local storage if available
+                const saved = localStorage.getItem('roadside_events');
+                if (saved) setData(JSON.parse(saved));
             }
 
             // 2. Notifications
