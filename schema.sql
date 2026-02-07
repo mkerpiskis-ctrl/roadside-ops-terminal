@@ -2,12 +2,13 @@
 create table events (
   id text primary key,
   created_at timestamptz default now(),
-  status text check (status in ('review', 'pending', 'resolved')),
+  timestamp text,
+  status text, -- Loosened for 'void' and future states
   vendor text,
   location text,
   type text,
   price numeric,
-  satisfaction text check (satisfaction in ('good', 'bad')),
+  satisfaction text, -- Loosened for 'neutral'
   notes text,
   review_notes text 
 );
@@ -31,7 +32,7 @@ create table notifications (
   id text primary key,
   title text,
   message text,
-  type text check (type in ('info', 'success', 'warning', 'error')),
+  type text,
   read boolean default false,
   timestamp text
 );
@@ -41,6 +42,6 @@ alter table events enable row level security;
 alter table vendors enable row level security;
 alter table notifications enable row level security;
 
-create policy "Public Access" on events for all using (true);
-create policy "Public Access" on vendors for all using (true);
-create policy "Public Access" on notifications for all using (true);
+create policy "Public Access" on events for all using (true) with check (true);
+create policy "Public Access" on vendors for all using (true) with check (true);
+create policy "Public Access" on notifications for all using (true) with check (true);

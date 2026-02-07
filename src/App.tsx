@@ -74,15 +74,33 @@ function App() {
     const syncEvent = async (event: Event, action: 'insert' | 'update' | 'delete') => {
         if (!isConnected) return; // Don't try if offline/mock
 
-        // Ensure consistent typing for DB
-        const dbEvent = { ...event };
+        // Map React camelCase to DB snake_case
+        const dbEvent: any = {
+            id: event.id,
+            status: event.status,
+            vendor: event.vendor,
+            location: event.location,
+            type: event.type,
+            price: event.price,
+            satisfaction: event.satisfaction,
+            review_notes: (event as any).reviewNotes,
+            created_at: (event as any).created_at || event.timestamp
+        };
 
+        let res;
         if (action === 'insert') {
-            await supabase.from('events').insert([dbEvent]);
+            res = await supabase.from('events').insert([dbEvent]);
         } else if (action === 'update') {
-            await supabase.from('events').update(dbEvent).eq('id', event.id);
+            res = await supabase.from('events').update(dbEvent).eq('id', event.id);
         } else if (action === 'delete') {
-            await supabase.from('events').delete().eq('id', event.id);
+            res = await supabase.from('events').delete().eq('id', event.id);
+        }
+
+        if (res?.error) {
+            console.error(`Supabase Sync Error (${action}):`, res.error.message, res.error.details);
+            addNotification('Sync Error', `Cloud update failed: ${res.error.message}`, 'warning');
+        } else {
+            console.log(`Supabase Sync Success (${action}):`, event.id);
         }
     };
 
